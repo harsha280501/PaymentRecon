@@ -1,0 +1,4 @@
+"Sales Date","Deposit Date","Store ID","Retek Code",Brand,"Col Bank",Status,"Sales Amount","Deposit Amount",Difference,"Pending Difference","Reconcilied Difference","Recon Status"
+02-05-2024,02-05-2024,1002,11002,"LOUIS PHILIPPE","HDFC UPI","Not Matched",0.00,12805.30,-12805.30,-24314.20,11508.90,Rejected
+30-04-2024,30-04-2024,1002,11002,"LOUIS PHILIPPE","HDFC UPI","Not Matched",0.00,33846.70,-33846.70,-28750.70,-5096.00,Rejected
+28-04-2024,28-04-2024,7729,27729,"VH GOLD","HDFC UPI","Not Matched",0.00,6597.00,-6597.00,-11577.20,4980.20,Rejected

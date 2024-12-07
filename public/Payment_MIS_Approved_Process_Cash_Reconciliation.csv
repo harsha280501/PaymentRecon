@@ -1,0 +1,4 @@
+"Sales Date","Desposit Date","Store ID","Retek Code","Brand Name","Collection Bank","Tender to BankMIS Status","Reconciliation Status","Bank Drop ID","Desposit SlipNo","Tender Amount","Deposit Amount","Tender to CashMIS Diff [Tender - Deposit]","Store Response Entry"
+2024-08-15,2024-08-17,1000,41000,"PLANET FASHION","AXIS Cash","Not Matched",Rejected,4100000790,4100000790,6597.00,1000.00,5597.00,
+2024-08-17,2024-08-19,1000,41000,"PLANET FASHION",,Matched,Approved,,,41528.00,,41528.00,41528.00
+,2024-06-24,6233,16233,"LP ALL STAR","AXIS Cash",Matched,Approved,,74418928,.00,10800.00,-10800.00,-10800.00

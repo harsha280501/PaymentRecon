@@ -1,0 +1,6 @@
+"Total Count: ",
+"Matched Count: ",
+"Not Matched Count: ",
+
+,,,,,,Total,,,,
+"Sales Date","Deposit Date","Store ID","Retek Code",Brand,ColBank,Status,"Card Sales","Deposit Amount","Store Response Entry","Difference [Sales - Deposit - Store Response]"

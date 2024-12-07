@@ -1,0 +1,5 @@
+"Sales Date","Deposit Date","Store ID","Retek Code",Brand,"Collection Bank",Status,"Recon Status","Sale Amount","Collection Amount",Difference[Sale-Deposit],"Adj Amount"
+18-08-2024,18-08-2024,3655,63655,"PE RED","WALLET PHONEPAY",Matched,Approved,3623.40,4622.40,-999.00,-900.00
+03-06-2024,03-06-2024,6110,66110,"PE RED","WALLET PHONEPAY",Matched,Approved,10092.00,11090.00,-998.00,-998.00
+21-06-2024,21-06-2024,6233,16233,"LP ALL STAR","WALLET PHONEPAY",Matched,Approved,17491.00,23988.00,-6497.00,-6497.00
+12-07-2024,12-07-2024,6233,16233,"LP ALL STAR","WALLET PHONEPAY",Matched,Approved,7196.00,10393.00,-3197.00,-3197.00

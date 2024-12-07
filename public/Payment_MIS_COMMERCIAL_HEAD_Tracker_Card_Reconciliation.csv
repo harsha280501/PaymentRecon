@@ -1,0 +1,12 @@
+"Total Count: ",6
+"Matched Count: ",4
+"Not Matched Count: ",2
+
+,,,,,,Total,17439.50,11832.20,.00,5607.30
+"Sales Date","Deposit Date","Store ID","Retek Code",Brand,ColBank,Status,"Card Sales","Deposit Amount","Store Response Entry","Difference [Sales - Deposit - Store Response]","Pending Difference","Reconcilied Difference"
+30-06-2024,30-06-2024,1020,21020,"VAN HEUSEN","HDFC Card",Matched,3599.00,3599.00,0.00,0.00,0.00,
+18-06-2024,18-06-2024,1020,21020,"VAN HEUSEN","HDFC Card",Matched,2299.00,2299.00,0.00,0.00,0.00,
+10-06-2024,10-06-2024,1020,21020,"VAN HEUSEN","HDFC Card",Matched,1797.20,1797.20,0.00,0.00,0.00,
+07-06-2024,,1020,21020,"VAN HEUSEN","HDFC Card","Not Matched",1199.00,0.00,0.00,1199.00,1199.00,
+03-06-2024,03-06-2024,1020,21020,"VAN HEUSEN","HDFC Card",Matched,1338.00,1338.00,0.00,0.00,0.00,
+02-06-2024,02-06-2024,1020,21020,"VAN HEUSEN","HDFC Card","Not Matched",7207.30,2799.00,0.00,4408.30,4408.30,
