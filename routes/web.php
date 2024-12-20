@@ -13,6 +13,7 @@ use App\Http\Livewire\Auth\ForgotPassword;
 use App\Http\Livewire\Auth\ResetPassword;
 use App\Http\Livewire\CommercialHead\Tracker\MposReconciliation;
 use App\Http\Livewire\CommercialHead\Process\CardProcess;
+use App\Http\Livewire\CommercialHead\Reports\BankMIS;
 
 
 
@@ -92,4 +93,7 @@ Route::get('/recon-search/{type}', function ($type) {
     }
     abort(404, "Search type '{$type}' not found.");
 })->name('reconSearch');
+
+Route::get('/search-tid', [BankMIS::class, 'searchTid'])->name('tidSearch');
+
 

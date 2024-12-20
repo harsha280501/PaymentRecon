@@ -67,7 +67,8 @@
                     <button
                         @click="() => {
                         $wire.back()
-                        reset()    
+                        reset()
+                        window.location.reload();
                 }"
                         style="background: transparent; outline: none; border: none; align-self: center; font-size: 1.3em; margin-top: 0em; padding: .2em .6em">
                         <i class="fa-solid fa-arrow-left"></i>
@@ -118,6 +119,18 @@
                     </div>
                 </div>
 
+                <div class="d-flex gap-2 pt-2 align-items-center">
+                    <template x-if="$wire.activeTab == 'all-card-mis' || $wire.activeTab == 'all-upi-mis'"
+                        wire:key="tid-filter">
+                        <div x-data="{ tid: '' }" style="display: flex; align-items: center; gap: 10px;">
+                            <div style="position: relative; width: 200px;" wire:ignore>
+                                <select id="tid_filter_dropdown" style="width: 100%; height: 40px;"></select>
+                                <button id="clear_tid_btn" type="button" class="clear-btn">×</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
                 <div class="mt-2 w-mob-100" wire:ignore.self>
                     <x-filters._filterStore data="stores" arr="store" key="SGVsbG9rbmRrbmNkYw" update="store"
                         initialValue="SELECT A STORE" />
@@ -128,8 +141,9 @@
                     <x-filters.months :months="$_months" />
                 </div>
 
-
-                <x-filters.date-filter />
+                <div class="pt-2">
+                    <x-filters.date-filter />
+                </div>
                 <x-filters.simple-export />
             </div>
         </div>
@@ -143,18 +157,12 @@
                             <tr class="headers">
                                 <th class="left">
                                     <div class="d-flex align-items-center gap-2">
-                                        <span>Credit Date</span>
-                                        {{-- <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy()"
-                                        class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i> --}}
-                                    </div>
-                                </th>
-                                <th class="left">
-                                    <div class="d-flex align-items-center gap-2">
                                         <span>Deposit Date</span>
                                         <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy()"
                                             class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i>
                                     </div>
                                 </th>
+                                <th>Credit Date</th>
                                 <th>Store ID</th>
                                 <th>Retek Code</th>
                                 <th>Pick Up Location</th>
@@ -169,18 +177,12 @@
                             <tr class="headers">
                                 <th class="left">
                                     <div class="d-flex align-items-center gap-2">
-                                        <span>Credit Date</span>
-                                        {{-- <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy()"
-                                        class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i> --}}
-                                    </div>
-                                </th>
-                                <th class="left">
-                                    <div class="d-flex align-items-center gap-2">
                                         <span>Deposit Date</span>
                                         <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy()"
                                             class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i>
                                     </div>
                                 </th>
+                                <th>Credit Date</th>
                                 <th>Store ID</th>
                                 <th>Retek Code</th>
                                 <th>Collection Bank</th>
@@ -197,18 +199,12 @@
                             <tr class="headers">
                                 <th class="left">
                                     <div class="d-flex align-items-center gap-2">
-                                        <span>Credit Date</span>
-                                        {{-- <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy()"
-                                        class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i> --}}
-                                    </div>
-                                </th>
-                                <th class="left">
-                                    <div class="d-flex align-items-center gap-2">
                                         <span>Deposit Date</span>
                                         <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy()"
                                             class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i>
                                     </div>
                                 </th>
+                                <th>Credit Date</th>
                                 <th>Store ID</th>
                                 <th>Retek Code</th>
                                 <th>Collection Bank</th>
@@ -225,18 +221,12 @@
                             <tr class="headers">
                                 <th class="left">
                                     <div class="d-flex align-items-center gap-2">
-                                        <span>Credit Date</span>
-                                        {{-- <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy()"
-                                        class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i> --}}
-                                    </div>
-                                </th>
-                                <th class="left">
-                                    <div class="d-flex align-items-center gap-2">
                                         <span>Deposit Date</span>
                                         <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy()"
                                             class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i>
                                     </div>
                                 </th>
+                                <th>Credit Date</th>
                                 <th>Store ID</th>
                                 <th>Retek Code</th>
                                 <th>Collection Bank</th>
@@ -256,9 +246,9 @@
                                     $data = (array) $main;
                                 @endphp
                                 <tr>
-                                    <td>{{ !$data['crDt'] ? '' : Carbon\Carbon::parse($data['crDt'])->format('d-m-Y') }}
-                                    </td>
                                     <td>{{ !$data['depositDt'] ? '' : Carbon\Carbon::parse($data['depositDt'])->format('d-m-Y') }}
+                                    </td>
+                                    <td>{{ !$data['crDt'] ? '' : Carbon\Carbon::parse($data['crDt'])->format('d-m-Y') }}
                                     </td>
                                     <td>{{ $data['storeID'] }}</td>
                                     <td>{{ $data['retekCode'] }}</td>
@@ -278,9 +268,9 @@
                                     $data = (array) $main;
                                 @endphp
                                 <tr>
-                                    <td>{{ !$data['creditDt'] ? '' : Carbon\Carbon::parse($data['creditDt'])->format('d-m-Y') }}
-                                    </td>
                                     <td>{{ !$data['depositDt'] ? '' : Carbon\Carbon::parse($data['depositDt'])->format('d-m-Y') }}
+                                    </td>
+                                    <td>{{ !$data['creditDt'] ? '' : Carbon\Carbon::parse($data['creditDt'])->format('d-m-Y') }}
                                     </td>
                                     <td>{{ $data['storeID'] }}</td>
                                     <td>{{ $data['retekCode'] }}</td>
@@ -306,9 +296,9 @@
                                     $data = (array) $main;
                                 @endphp
                                 <tr>
-                                    <td>{{ !$data['creditDt'] ? '' : Carbon\Carbon::parse($data['creditDt'])->format('d-m-Y') }}
-                                    </td>
                                     <td>{{ !$data['depositDt'] ? '' : Carbon\Carbon::parse($data['depositDt'])->format('d-m-Y') }}
+                                    </td>
+                                    <td>{{ !$data['creditDt'] ? '' : Carbon\Carbon::parse($data['creditDt'])->format('d-m-Y') }}
                                     </td>
                                     <td>{{ $data['storeID'] }}</td>
                                     <td>{{ $data['retekCode'] }}</td>
@@ -334,9 +324,9 @@
                                     $data = (array) $main;
                                 @endphp
                                 <tr>
-                                    <td>{{ !$data['creditDt'] ? '' : Carbon\Carbon::parse($data['creditDt'])->format('d-m-Y') }}
-                                    </td>
                                     <td>{{ !$data['depositDt'] ? '' : Carbon\Carbon::parse($data['depositDt'])->format('d-m-Y') }}
+                                    </td>
+                                    <td>{{ !$data['creditDt'] ? '' : Carbon\Carbon::parse($data['creditDt'])->format('d-m-Y') }}
                                     </td>
                                     <td>{{ $data['storeID'] }}</td>
                                     <td>{{ $data['retekCode'] }}</td>
@@ -366,5 +356,69 @@
         Livewire.on('resetall', event => {
             $j('#select22-dropdown').val('');
         });
+
+        function initializeTidFilter() {
+            let activeTab = @json($activeTab ?? '');
+            const tidFilter = $j('#tid_filter_dropdown').select2({
+                placeholder: 'SELECT A TID',
+                minimumInputLength: 3,
+                ajax: {
+                    url: '{{ route('tidSearch') }}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: params => ({
+                        search: params.term,
+                        activeTab: activeTab,
+                    }),
+                    processResults: function(data) {
+                        return {
+                            results: data.results ? data.results : []
+                        };
+                    },
+                },
+            });
+
+            $j('#clear_tid_btn').on('click', function() {
+                $j('#tid_filter_dropdown').val(null).trigger('change');
+                Livewire.emit('updateTid', ''); // Emit empty string when clearing
+                $j(this).hide();
+            }).hide();
+
+            tidFilter.on('select2:select', function(event) {
+                const selectedTid = event.target.value;
+                // Emit the selected tid to Livewire component
+                Livewire.emit('updateTid', selectedTid);
+                $j('#clear_tid_btn').show();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTidFilter();
+        });
     </script>
+    <style>
+        .clear-btn {
+            background: transparent;
+            color: rgb(94, 58, 58);
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 33%;
+            right: 20px;
+            transform: translateY(-50%);
+            z-index: 1;
+            cursor: pointer;
+        }
+
+        .clear-btn:hover {
+            color: #ff0000;
+        }
+    </style>
 </div>

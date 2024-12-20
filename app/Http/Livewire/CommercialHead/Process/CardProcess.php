@@ -323,7 +323,7 @@ class CardProcess extends Component implements UseExcelDataset, WithFormatting, 
         ];
         $this->showModal = true;
 
-        $this->modalData = DB::withOrderBySelect('PaymentMIS_PROC_COMMERCIALHEAD_SELECT_Process_Card_Reconciliation_Test :procType, :store, :bank, :location, :startDate, :endDate, :id', $params, $this->perPage, $this->orderBy);
+        $this->modalData = DB::withOrderBySelect('PaymentMIS_PROC_COMMERCIALHEAD_SELECT_Process_Card_Reconciliation :procType, :store, :bank, :location, :startDate, :endDate, :id', $params, $this->perPage, $this->orderBy);
     }
     public function closeModal()
     {
@@ -365,7 +365,7 @@ class CardProcess extends Component implements UseExcelDataset, WithFormatting, 
         \Log::debug("Executing search for {$type} with parameters: ", $params);
 
         $results = DB::select(
-            'EXEC PaymentMIS_PROC_COMMERCIALHEAD_SELECT_Process_Card_Reconciliation_Test
+            'EXEC PaymentMIS_PROC_COMMERCIALHEAD_SELECT_Process_Card_Reconciliation
             @procType = :procType,
             @storeId = :storeId,
             @bank = :bank,

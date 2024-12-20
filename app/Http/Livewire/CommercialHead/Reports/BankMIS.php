@@ -17,6 +17,8 @@ use App\Traits\WithExportDate;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BankMIS extends Component implements UseExcelDataset, WithHeaders
 {
@@ -256,13 +258,12 @@ class BankMIS extends Component implements UseExcelDataset, WithHeaders
      * @var array
      */
     public $wallet_banks = [];
-
-
-
-
-
-
-
+    public $selectedTid = null;
+    protected $listeners = ['updateTid' => 'setSelectedTid'];
+    public function setSelectedTid($selectedTid)
+    {
+        $this->selectedTid = $selectedTid;
+    }
 
 
     /**
@@ -538,7 +539,9 @@ class BankMIS extends Component implements UseExcelDataset, WithHeaders
     }
 
 
-
+    // 21023128,21009254,21026659
+// no data
+// 21092213
 
 
 
@@ -548,20 +551,48 @@ class BankMIS extends Component implements UseExcelDataset, WithHeaders
      */
     public function getTotals(): Collection|array
     {
-        // Get the totals for the active tab
-        return DB::withOrderBySelect(
-            'PaymentMIS_PROC_SELECT_COMMERCIALHEAD_BankMIS_All_Bank_Reports_MIS :procType, :storeId, :bankName, :slipNo, :from, :to',
-            [
-                'procType' => $this->activeTab . '-totals',
+        if (!empty($this->selectedTid)) {
+            $params = [
+                'procType' => $this->activeTab . '-totals', // Concatenate active tab and '-totals'
                 'storeId' => $this->store,
                 'bankName' => $this->bankName,
                 'slipNo' => $this->slip,
                 'from' => $this->from,
-                'to' => $this->to
-            ],
-            $this->perPage,
-            $this->orderBy
-        );
+                'to' => $this->to,
+                'PageSize' => $this->perPage,
+                'orderBy' => $this->orderBy,
+                'selectedTid' => $this->selectedTid
+            ];
+
+            // Execute query and return results as a collection
+            return collect(DB::select(
+                'EXEC PaymentMIS_PROC_SELECT_COMMERCIALHEAD_BankMIS_All_Bank_Reports_MIS
+                @procType = :procType,
+                @storeId = :storeId,
+                @bankName = :bankName,
+                @slipNo = :slipNo,
+                @from = :from,
+                @to = :to,
+                @PageSize = :PageSize,
+                @OrderBy = :orderBy,
+                @selectedTid = :selectedTid',
+                $params
+            ));
+        } else {
+            return DB::withOrderBySelect(
+                'PaymentMIS_PROC_SELECT_COMMERCIALHEAD_BankMIS_All_Bank_Reports_MIS :procType, :storeId, :bankName, :slipNo, :from, :to',
+                [
+                    'procType' => $this->activeTab . '-totals',
+                    'storeId' => $this->store,
+                    'bankName' => $this->bankName,
+                    'slipNo' => $this->slip,
+                    'from' => $this->from,
+                    'to' => $this->to
+                ],
+                $this->perPage,
+                $this->orderBy
+            );
+        }
     }
 
 
@@ -611,23 +642,55 @@ class BankMIS extends Component implements UseExcelDataset, WithHeaders
     public function allBankMIS()
     {
 
-        // Main Params to the query
-        $params = [
-            'procType' => $this->activeTab,
-            'storeId' => $this->store,
-            'bankName' => $this->bankName,
-            'slipNo' => $this->slip,
-            'from' => $this->from,
-            'to' => $this->to
-        ];
-
-        // Paginating the Query
-        return DB::withOrderBySelect(
-            'PaymentMIS_PROC_SELECT_COMMERCIALHEAD_BankMIS_All_Bank_Reports_MIS :procType, :storeId, :bankName, :slipNo, :from, :to',
-            $params,
-            $this->perPage,
-            $this->orderBy
-        );
+        // Then later in your code:
+        Log::debug('tid', ['activeTab' => $this->activeTab, 'selectedTid' => $this->selectedTid]);
+        if (!empty($this->selectedTid)) {
+            $params = [
+                'procType' => $this->activeTab,
+                'storeId' => $this->store,
+                'bankName' => $this->bankName,
+                'slipNo' => $this->slip,
+                'from' => $this->from,
+                'to' => $this->to,
+                'PageSize' => $this->perPage,
+                'orderBy' => $this->orderBy,
+                'selectedTid' => $this->selectedTid
+            ];
+            logger(json_encode($params));
+            logger($this->orderBy);
+            logger($this->perPage);
+            return collect(DB::select(
+                'EXEC PaymentMIS_PROC_SELECT_COMMERCIALHEAD_BankMIS_All_Bank_Reports_MIS
+                @procType = :procType,
+                @storeId = :storeId,
+                @bankName = :bankName,
+                @slipNo = :slipNo,
+                @from = :from,
+                @to = :to,
+                @PageSize = :PageSize,
+                @OrderBy = :orderBy,
+                @selectedTid = :selectedTid',
+                $params
+            ));
+        } else {
+            $params = [
+                'procType' => $this->activeTab,
+                'storeId' => $this->store,
+                'bankName' => $this->bankName,
+                'slipNo' => $this->slip,
+                'from' => $this->from,
+                'to' => $this->to
+            ];
+            logger(json_encode($params));
+            logger($this->orderBy);
+            logger($this->perPage);
+            return DB::withOrderBySelect(
+                'PaymentMIS_PROC_SELECT_COMMERCIALHEAD_BankMIS_All_Bank_Reports_MIS :procType, :storeId, :bankName, :slipNo, :from, :to',
+                $params,
+                $this->perPage,
+                $this->orderBy
+            );
+        }
     }
 
 
@@ -647,11 +710,55 @@ class BankMIS extends Component implements UseExcelDataset, WithHeaders
         $totals = $this->getTotals();
         $this->card_banks = $this->banks('all-card-mis');
         $this->wallet_banks = $this->banks('all-wallet-mis');
-
         // main view
         return view('livewire.commercial-head.reports.bank-m-i-s', [
             'mis' => $bankMIS,
             'totals' => $totals
         ]);
+    }
+    public function searchTid(Request $request)
+    {
+        $searchTerm = $request->input('search');
+        $activeTab = $request->input('activeTab');
+        if ($activeTab === 'all-card-mis') {
+            $searchProctype = 'Card-TID';
+        } elseif ($activeTab === 'all-upi-mis') {
+            $searchProctype = 'UPI-TID';
+        } else {
+            $searchProctype = '';
+        }
+        $params = [
+            'procType' => $searchProctype,
+            'storeId' => $this->store,
+            'bankName' => $this->bankName,
+            'slipNo' => $this->slip,
+            'from' => $this->from,
+            'to' => $this->to,
+            'search' => $searchTerm ?? null,
+            'PageSize' => $this->perPage,
+            'orderBy' => $this->orderBy
+        ];
+
+        $searchedTid = DB::select(
+            'EXEC PaymentMIS_PROC_SELECT_COMMERCIALHEAD_BankMIS_All_Bank_Reports_MIS
+            @procType = :procType,
+            @storeId = :storeId,
+            @bankName = :bankName,
+            @slipNo = :slipNo,
+            @from = :from,
+            @to = :to,
+            @search = :search,
+            @PageSize = :PageSize,
+            @OrderBy = :orderBy',
+            $params
+        );
+
+        $results = collect($searchedTid)->map(function ($item) {
+            return [
+                'id' => $item->tid,
+                'text' => $item->tid
+            ];
+        });
+        return response()->json(['results' => $results]);
     }
 }
