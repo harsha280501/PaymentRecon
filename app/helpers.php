@@ -52,4 +52,3 @@ if (!function_exists('getReconClosingDate')) {
         return DB::selectOne('SELECT dbo.GetReconClosingDate() AS endDate')->endDate;
     }
 }
-

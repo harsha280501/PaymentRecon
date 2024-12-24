@@ -126,12 +126,9 @@ class CardProcess extends Component implements UseExcelDataset, WithFormatting, 
      * @var string
      */
     public $store = '';
-
     public $cardSalesRecoUID;
     public $showModal = false;
     public $modalData = [];
-
-
 
     /**
      * Initialize stores
@@ -145,7 +142,6 @@ class CardProcess extends Component implements UseExcelDataset, WithFormatting, 
         // $this->cardStores = $this->filters('card-stores');
         $this->filtering = ($this->store != null || $this->bank != null || $this->startDate != null) ? true : false;
         // $this->location = $this->_location();
-
     }
 
 
@@ -361,8 +357,6 @@ class CardProcess extends Component implements UseExcelDataset, WithFormatting, 
             'PageSize' => $this->perPage ?: 30,
             'orderBy' => $this->orderBy ?? 'ASC',
         ];
-
-        \Log::debug("Executing search for {$type} with parameters: ", $params);
 
         $results = DB::select(
             'EXEC PaymentMIS_PROC_COMMERCIALHEAD_SELECT_Process_Card_Reconciliation

@@ -41,8 +41,8 @@
             <select id="approval-filter" class="custom-select select2 form-control searchField " data-live-search="true" data-bs-toggle="dropdown" style="width: 230px">
                 <option selected disabled value="" class="dropdown-item">SELECT APPROVAL STATUS</option>
                 <option value="" class="dropdown-item">ALL</option>
-                <option class="dropdown-list" value="approve">Approved</option>
-                <option class="dropdown-list" value="disapprove">Rejected</option>
+                <option class="dropdown-list" value="Approved">Approved</option>
+                <option class="dropdown-list" value="Rejected">Rejected</option>
             </select>
         </div>
 

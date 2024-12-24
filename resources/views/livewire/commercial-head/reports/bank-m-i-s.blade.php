@@ -56,6 +56,15 @@
                             WALLET MIS
                         </a>
                     </li>
+
+                    <li class="nav-item"
+                        wire:key="2cf24dba5fb0a30e26fngfhsccvcve83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824">
+                        <a href="{{ url('/') }}/chead/reports/bankmis?t=op-balance"
+                            class="nav-link @if ($activeTab === 'op-balance') active @endif"
+                            wire:click="$set('activeTab', 'op-balance')">
+                            OpeningBalance
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -119,7 +128,7 @@
                     </div>
                 </div>
 
-                <div class="d-flex gap-2 pt-2 align-items-center">
+                {{-- <div class="d-flex gap-2 pt-2 align-items-center">
                     <template x-if="$wire.activeTab == 'all-card-mis' || $wire.activeTab == 'all-upi-mis'"
                         wire:key="tid-filter">
                         <div x-data="{ tid: '' }" style="display: flex; align-items: center; gap: 10px;">
@@ -129,13 +138,12 @@
                             </div>
                         </div>
                     </template>
-                </div>
+                </div> --}}
 
                 <div class="mt-2 w-mob-100" wire:ignore.self>
-                    <x-filters._filterStore data="stores" arr="store" key="SGVsbG9rbmRrbmNkYw" update="store"
-                        initialValue="SELECT A STORE" />
+                    <x-filters._filterStore :activetab="$activeTab" data="stores" arr="store" key="SGVsbG9rbmRrbmNkYw"
+                        update="store" initialValue="SELECT A STORE" />
                 </div>
-
 
                 <div class="mt-2 w-mob-100">
                     <x-filters.months :months="$_months" />
@@ -147,8 +155,9 @@
                 <x-filters.simple-export />
             </div>
         </div>
-
-        <x-app.commercial-head.reports.bankmis.totals :dataset="$totals" />
+        @if ($activeTab !== 'op-balance')
+            <x-app.commercial-head.reports.bankmis.totals :dataset="$totals" />
+        @endif
         <div class="row">
             <div class="col-lg-12">
                 <x-scrollable.scrollable :dataset="$mis">
@@ -236,6 +245,26 @@
                                 <th style="text-align: right !important">GST</th>
                                 <th style="text-align: right !important">Net Amount</th>
                                 <th>Bank Ref / UTR No</th>
+                            </tr>
+                        @endif
+
+                        @if ($activeTab == 'op-balance')
+                            <tr class="headers">
+                                <th class="left">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span>openingBalanceDate</span>
+                                        <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy()"
+                                            class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i>
+                                    </div>
+                                </th>
+                                <th>Store ID</th>
+                                <th>Retek Code</th>
+                                <th>openingBalanceYear</th>
+                                <!-- <th>cashOpBalance</th>
+                                <th>cardOpBalance</th>
+                                <th>upiOpBalance</th>
+                                <th>walletOpBalance</th> -->
+                                <th>totalOpBalance</th>
                             </tr>
                         @endif
                     </x-scrollable.scroll-head>
@@ -343,6 +372,25 @@
                                     <td>{{ $data['bankRrefORutrNo'] }}</td>
                                 </tr>
                             @endforeach
+                        @elseif($activeTab == 'op-balance')
+                            @foreach ($mis as $main)
+                                @php
+                                    $data = (array) $main;
+                                @endphp
+                                <tr>
+                                    <td>{{ !$data['openingBalanceDate'] ? '' : Carbon\Carbon::parse($data['openingBalanceDate'])->format('d-m-Y') }}
+                                    </td>
+                                    <td>{{ $data['storeID'] }}</td>
+                                    <td>{{ $data['retekCode'] }}</td>
+                                    <td>{{ $data['openingBalanceYear'] }}</td>
+                                    <!-- <td>{{ $data['cashOpBalance'] }}</td>
+                                    <td>{{ $data['cardOpBalance'] }}</td>
+                                    <td>{{ $data['upiOpBalance'] }}</td>
+                                    <td>{{ $data['walletOpBalance'] }}</td> -->
+                                    <td>{{ $data['totalOpBalance'] }}</td>
+
+                                </tr>
+                            @endforeach
                         @endif
                     </x-scrollable.scroll-body>
                 </x-scrollable.scrollable>
@@ -357,46 +405,46 @@
             $j('#select22-dropdown').val('');
         });
 
-        function initializeTidFilter() {
-            let activeTab = @json($activeTab ?? '');
-            const tidFilter = $j('#tid_filter_dropdown').select2({
-                placeholder: 'SELECT A TID',
-                minimumInputLength: 3,
-                ajax: {
-                    url: '{{ route('tidSearch') }}',
-                    dataType: 'json',
-                    delay: 250,
-                    data: params => ({
-                        search: params.term,
-                        activeTab: activeTab,
-                    }),
-                    processResults: function(data) {
-                        return {
-                            results: data.results ? data.results : []
-                        };
-                    },
-                },
-            });
+        // function initializeTidFilter() {
+        //     let activeTab = @json($activeTab ?? '');
+        //     const tidFilter = $j('#tid_filter_dropdown').select2({
+        //         placeholder: 'SELECT A TID',
+        //         minimumInputLength: 3,
+        //         ajax: {
+        //             url: '{{ route('tidSearch') }}',
+        //             dataType: 'json',
+        //             delay: 250,
+        //             data: params => ({
+        //                 search: params.term,
+        //                 activeTab: activeTab,
+        //             }),
+        //             processResults: function(data) {
+        //                 return {
+        //                     results: data.results ? data.results : []
+        //                 };
+        //             },
+        //         },
+        //     });
 
-            $j('#clear_tid_btn').on('click', function() {
-                $j('#tid_filter_dropdown').val(null).trigger('change');
-                Livewire.emit('updateTid', ''); // Emit empty string when clearing
-                $j(this).hide();
-            }).hide();
+        //     $j('#clear_tid_btn').on('click', function() {
+        //         $j('#tid_filter_dropdown').val(null).trigger('change');
+        //         Livewire.emit('updateTid', ''); // Emit empty string when clearing
+        //         $j(this).hide();
+        //     }).hide();
 
-            tidFilter.on('select2:select', function(event) {
-                const selectedTid = event.target.value;
-                // Emit the selected tid to Livewire component
-                Livewire.emit('updateTid', selectedTid);
-                $j('#clear_tid_btn').show();
-            });
-        }
+        //     tidFilter.on('select2:select', function(event) {
+        //         const selectedTid = event.target.value;
+        //         // Emit the selected tid to Livewire component
+        //         Livewire.emit('updateTid', selectedTid);
+        //         $j('#clear_tid_btn').show();
+        //     });
+        // }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeTidFilter();
-        });
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     initializeTidFilter();
+        // });
     </script>
-    <style>
+    {{-- <style>
         .clear-btn {
             background: transparent;
             color: rgb(94, 58, 58);
@@ -420,5 +468,5 @@
         .clear-btn:hover {
             color: #ff0000;
         }
-    </style>
+    </style> --}}
 </div>

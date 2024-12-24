@@ -73,7 +73,7 @@ class BankStatement extends Component implements UseExcelDataset, WithHeaders {
 
     /**
      * Filter dates (start)
-     * @var
+     * @var 
      */
     public $from = null;
 
@@ -84,7 +84,7 @@ class BankStatement extends Component implements UseExcelDataset, WithHeaders {
 
     /**
      * Filter dates (end)
-     * @var
+     * @var 
      */
     public $to = null;
 
@@ -150,7 +150,7 @@ class BankStatement extends Component implements UseExcelDataset, WithHeaders {
 
 
 
-
+    
 
 
 
@@ -159,7 +159,7 @@ class BankStatement extends Component implements UseExcelDataset, WithHeaders {
      * @return void
      */
     public function mount() {
-        // the account number is not selected without switching the tab to te same tab
+        // the account number is not selected without switching the tab to te same tab  
         $this->switchTab('hdfc');
         $this->_months = $this->_months()->toArray();
     }
@@ -170,7 +170,7 @@ class BankStatement extends Component implements UseExcelDataset, WithHeaders {
 
 
 
-
+    
     /**
      * Update the Search variable
      * @param string $search
@@ -186,7 +186,7 @@ class BankStatement extends Component implements UseExcelDataset, WithHeaders {
 
 
 
-
+    
     /**
      * Date filter
      * @param mixed $obj
@@ -241,8 +241,8 @@ class BankStatement extends Component implements UseExcelDataset, WithHeaders {
 
 
 
-
-
+    
+    
 
 
 

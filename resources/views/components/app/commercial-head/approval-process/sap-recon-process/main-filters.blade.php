@@ -7,45 +7,41 @@
         this.end = null
     }
 }'>
-    <div class="d-flex d-flex-mob gap-2" style="@if ($activeTab !== $show) display: none !important @endif">
+    <div class="d-flex d-flex-mob gap-2" style="@if($activeTab !== $show) display: none !important @endif">
         <div style="display:@if ($filtering) unset @else none @endif" class="">
             <button @click="() => {
                 $wire.back()
                 reset()
-            }"
-                style="background: transparent; outline: none; border: none; padding: .5em 1em; font-size: 1em">
+            }" style="background: transparent; outline: none; border: none; padding: .5em 1em; font-size: 1em">
                 <i class="fa fa-arrow-left"></i>
             </button>
         </div>
 
         <div wire:ignore class="">
-            <select id="{{ $storeId }}" class="custom-select select2 form-control searchField "
-                data-live-search="true" data-bs-toggle="dropdown" style="width: 230px">
+            <select id="{{ $storeId }}" class="custom-select select2 form-control searchField " data-live-search="true" data-bs-toggle="dropdown" style="width: 230px">
                 <option selected disabled value="" class="dropdown-item">SELECT STORE ID</option>
                 <option value="" class="dropdown-item">ALL</option>
-                @php
-                    logger($stores);
-                    logger($storeId);
-                @endphp
-                @foreach ($stores as $item)
-                    @php
-                        $item = (array) $item;
-                    @endphp
 
-                    @if ($item['storeId'] != '')
-                        <option class="dropdown-list" value="{{ $item['storeId'] }}">{{ $item['storeId'] }}</option>
-                    @endif
+                @foreach($stores as $item)
+
+                @php
+                $item = (array) $item;
+                @endphp
+
+                @if($item['storeId'] != '')
+                <option class="dropdown-list" value="{{ $item['storeId'] }}">{{ $item["storeId"] }}</option>
+                @endif
+
                 @endforeach
             </select>
         </div>
 
         <div wire:ignore class="">
-            <select id="approval-filter" class="custom-select select2 form-control searchField " data-live-search="true"
-                data-bs-toggle="dropdown" style="width: 230px">
+            <select id="approval-filter" class="custom-select select2 form-control searchField " data-live-search="true" data-bs-toggle="dropdown" style="width: 230px">
                 <option selected disabled value="" class="dropdown-item">SELECT APPROVAL STATUS</option>
                 <option value="" class="dropdown-item">ALL</option>
-                <option class="dropdown-list" value="approve">Approved</option>
-                <option class="dropdown-list" value="disapprove">Rejected</option>
+                <option class="dropdown-list" value="Approved">Approved</option>
+                <option class="dropdown-list" value="Rejected">Rejected</option>
             </select>
         </div>
 

@@ -256,18 +256,18 @@ public function TruncateTables(Request $request)
     {
         // Validate the request to ensure procType is provided
         $request->validate([
-            'robot' => 'required|string'
+            'procType' => 'required|string'
         ]);
     
-        $robot = $request->input('robot');
+        $procType = $request->input('procType');
     
         try {
             // Begin the transaction
             DB::beginTransaction();
     
             // Call the stored procedure with the procType parameter
-            DB::statement('EXEC sp_Insert_CashReconciliation @robot = :robot', [
-                'robot' => $robot
+            DB::statement('EXEC PaymentMIS_API_CashRecon @procType = :procType', [
+                'procType' => $procType
             ]);
     
             // Commit the transaction
@@ -318,7 +318,34 @@ public function TruncateTables(Request $request)
         }
     }
 
-   
+    public function AllBankCash(Request $request)
+    {
+        try {
+            // Begin the transaction
+            DB::beginTransaction();
+
+            // Call the stored procedure
+            DB::statement('MFL_Inward_Staging_MFL_Inward_AllBankCashMIS_Table');
+
+            // Commit the transaction
+            DB::commit();
+
+            // Return success response
+            return response()->json([
+                'status' => 201,
+                'message' => "Executed Successfully"
+            ], 201);
+        } catch (\Throwable $th) {
+            // Rollback the transaction in case of error
+            DB::rollBack();
+      
+            // Return error response
+            return response()->json([
+                'status' => $th->getCode(),
+                'message' => "Query failed"
+            ], 500);
+        }
+    }
 
     public function InsertnewStoreID(Request $request)
     {
@@ -356,8 +383,6 @@ public function TruncateTables(Request $request)
             ], 500);
         }
     }
-
-   
     public function ReconDate(Request $request)
     {
         // Validate the request to ensure procType is provided

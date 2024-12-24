@@ -595,6 +595,7 @@ class CardTransaction extends Component
 
             return collect($data);
         } else {
+
             $params = [
                 'procType' => $this->activeTab,
                 'bank' => $this->bank,

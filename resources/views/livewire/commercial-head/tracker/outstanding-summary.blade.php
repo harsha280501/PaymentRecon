@@ -13,7 +13,7 @@
             <div style="display:@if ($filtering) unset @else none @endif" class="">
                 <button @click="() => {
                 $wire.back()
-                reset()    
+                reset()
             }" style="background: transparent; outline: none; border: none; align-self: center; font-size: 1.3em; margin-top: 0em; padding: .2em .6em">
                     <i class="fa-solid fa-arrow-left"></i>
                 </button>
@@ -82,10 +82,14 @@
                     <th>Retek Code</th>
                     <th>Brand</th>
                     <th style="text-align: right !important">Opening Balance</th>
-                    <th style=" text-align: right !important">Sales</th>
+                    <th style="text-align: right !important">Sales</th>
                     <th style="text-align: right !important">Collection</th>
                     <th style="text-align: right !important">Store Response</th>
-                    <th style="text-align: right !important">Closing Balance</th>
+
+                    <th style="text-align: center !important">
+                        <div>Closing Balance</div>
+                        <div style="font-size: 1.1em; font-weight: normal;">[Sales-Collection-Store Response]</div>
+                    </th>
                 </tr>
             </x-scrollable.scroll-head>
             <x-scrollable.scroll-body>
@@ -99,7 +103,7 @@
                     <td class="right" style="background: rgba(0, 0, 0, 0.034); text-align: right !important">{{ $data->SALES_TOTAL }}</td>
                     <td class="right" style="background: rgba(0, 0, 0, 0.034); text-align: right !important">{{ $data->COLL_TOTAL }}</td>
                     <td class="right" style="background: rgba(0, 0, 0, 0.034); text-align: right !important">{{ $data->adjustmentTotal }}</td>
-                    <td class="right" style="background: rgba(0, 0, 0, 0.034); text-align: right !important">{{ $data->CL_TOTAL }}</td>
+                    <td class="center" style="background: rgba(0, 0, 0, 0.034); text-align: center !important">{{ $data->CL_TOTAL }}</td>
                 </tr>
                 @endforeach
 

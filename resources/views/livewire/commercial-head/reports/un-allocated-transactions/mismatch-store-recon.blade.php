@@ -13,8 +13,7 @@
     });
 
     Livewire.on('unallocated:failed', (message) => {
-        console.log(message);
-        errorMessageConfiguration('Something went wrong!, Please try again.');
+        errorMessageConfiguration('Something went wrong!, Please try again.' + message);
         return false;
     });
 }">

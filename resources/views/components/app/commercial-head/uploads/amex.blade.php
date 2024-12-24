@@ -1,11 +1,11 @@
-<div class="col-lg-2 col-12 ms-1 mt-3">
+<div class="col-lg-3 col-12  mt-3">
     <div class="entry-box1 p-3">
         <h2>AmexPos</h2>
         <div class="row">
             <div class="col-lg-12 col-6">
                 <button data-bs-toggle="modal" data-bs-target="#AmexUploadModal" class="btn btn-success"><i class="fa fa-plus mb-1" aria-hidden="true"></i><br>Card</button>
             </div>
-            <div class="col-lg-4 col-6 d-none">
+            <div class="col-lg-4 col-6" style="display: none;">
                 <button class="btn btn-success"><i class="fa fa-plus mb-1" aria-hidden="true"></i><br>Credit</button>
             </div>
             {{-- <div class="col-lg-4 col-4" style="display: none;">
@@ -19,5 +19,3 @@
     <x-modals.commercial-head.upload exampleFileLink="{{ asset('public/sample/amexpos-card-sample.csv') }}"
     name="Paytm Upload" id="walletModal" url="/upload/cash/all" /> --}}
 </div>
-
-

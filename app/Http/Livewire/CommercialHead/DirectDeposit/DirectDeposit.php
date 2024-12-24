@@ -15,6 +15,7 @@ use App\Traits\WithExportDate;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -225,8 +226,9 @@ class DirectDeposit extends Component implements UseExcelDataset, WithHeaders {
 
 
 
-
     public function save() {
+        // Set the verbosity level
+        Log::channel('direct-deposit')->info('Direct deposit save process started');
 
         $this->validate([
             "uploadFile" => "required|mimes:xls,csv"
@@ -236,15 +238,16 @@ class DirectDeposit extends Component implements UseExcelDataset, WithHeaders {
         $this->uploadFile->storeAs('commercial/direct-deposit/', $fileName);
         $fullPath = storage_path() . "/app/public/commercial/direct-deposit/" . $fileName;
         $excel = $this->reader($fullPath);
-
+        Log::channel('direct-deposit')->info('File processed', ['fileName' => $fileName]);
 
         foreach ($excel as $index => $row) {
-
             // Skip the header row
-            if ($index == 1)
+            if ($index == 1) {
+                Log::channel('direct-deposit')->info('Skipping header row');
                 continue;
-            try {
+            }
 
+            try {
                 $data = [
                     'storeID' => $row['A'],
                     'retekCode' => $row['B'],
@@ -265,8 +268,9 @@ class DirectDeposit extends Component implements UseExcelDataset, WithHeaders {
                 ];
 
                 DB::beginTransaction();
+                Log::channel('direct-deposit')->info('Inserting or updating record', ['data' => $data]);
 
-                // inserting to the DB
+                // Inserting to the DB
                 \App\Models\Masters\DirectDeposit::updateOrInsert([
                     'storeID' => $row['A'],
                     'retekCode' => $row['B'],
@@ -277,15 +281,18 @@ class DirectDeposit extends Component implements UseExcelDataset, WithHeaders {
                 ], $data);
 
                 DB::commit();
+                Log::channel('direct-deposit')->info('Record saved successfully', ['storeID' => $row['A'], 'depositSlipNo' => $row['C']]);
 
             } catch (\Throwable $th) {
                 DB::rollBack();
+                Log::channel('direct-deposit')->error('Failed to save record', ['error' => $th->getMessage(), 'row' => $row]);
                 $this->emit('direct-deposit:failed', $th->getMessage());
                 return false;
             }
         }
 
         $this->emit('direct-deposit:success');
+        Log::channel('direct-deposit')->info('Direct deposit save process completed successfully');
         return true;
     }
 

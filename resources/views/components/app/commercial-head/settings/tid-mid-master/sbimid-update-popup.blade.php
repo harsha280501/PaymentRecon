@@ -29,6 +29,14 @@
                                 <input type="text" class="form-control" id="storeID" value="{{ $data->storeID }}">
                             </div>
                         </div>
+                        <div class="col-lg-4 d-none">
+                            <div class="form-group">
+                                <label for="exampleInputUsername1">
+                                    <h5>POS</h5>
+                                </label>
+                                <input type="text" class="form-control" id="POS" value="{{ $data->POS ?? 0 }}">
+                            </div>
+                        </div>
                         <div class="col-lg-4">
                             <div class="form-group" >
                                 <label style="color:#000; font-size: 15px; font-weight: bold;margin-bottom:1.5rem ">Bank Name</label>

@@ -30,7 +30,7 @@
                                 </label>
                                 <input type="text" class="form-control" id="POS" value="{{ $data->POS ?? 0 }}">
                             </div>
-                        </div>
+                        </div> 
                         <div class="col-lg-4">
                             <div class="form-group">
                                 <label for="exampleInputUsername1">
@@ -41,15 +41,13 @@
                         </div>
                         <div class="col-lg-4">
                             <div class="form-group">
-                                <label style="color:#000; font-size: 15px; font-weight: bold; margin-bottom:1.0rem">Bank
-                                    Name</label>
-                                <div
-                                    style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9;">
+                                <label style="color:#000; font-size: 15px; font-weight: bold; margin-bottom:1.0rem">Bank Name</label>
+                                <div style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9;">
                                     {{ $data->tidType ?? 'AMEX' }}
                                 </div>
                             </div>
                         </div>
-
+                        
                     </div>
                     <div class="row">
                         <div class="col-lg-4">
@@ -123,12 +121,16 @@
                                     <label for="exampleInputUsername1">
                                         <h5>Date of Conversion</h5>
                                     </label>
-                                    <input type="date" class="form-control" id="conversionDt"
-                                        value="{{ $data->conversionDt }}">
+                                    <input type="date" class="form-control" id="conversionDt" value="{{ $data->conversionDt }}">
                                 </div>
                             </div>
+                           
+                            
+                           
+                            
+                            
                         </div>
-
+                        
                         <div class="col-lg-4 d-none">
                             <div class="form-group">
                                 <label for="exampleInputUsername1">

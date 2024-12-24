@@ -18,6 +18,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Traits\BulkSelection;
+use Illuminate\Support\Facades\Log;
 
 class CashDirectDepositReco extends Component {
 
@@ -404,14 +405,35 @@ class CashDirectDepositReco extends Component {
 
 
 
-
     public function save(array $dataset) {
+        Log::channel('cash-direct-deposit')->debug('Starting save method', ['dataset' => $dataset]);
 
+        // Find the data record
         $data = CashDepositReco::find($dataset['id']);
+        Log::channel('cash-direct-deposit')->debug('Looking up CashDepositReco', ['id' => $dataset['id']]);
+
+        if (!$data) {
+            Log::channel('cash-direct-deposit')->warning('CashDepositReco not found', ['id' => $dataset['id']]);
+            $this->emit('cash-deposit:failed', 'Record not found.');
+            return false;
+        }
 
         try {
             DB::beginTransaction();
+            Log::channel('cash-direct-deposit')->info('Updating CashDepositReco record', [
+                'id' => $dataset['id'],
+                'update_data' => [
+                    "storeID" => $dataset['storeID'],
+                    "retekCode" => $dataset['retekCode'],
+                    "salesDate" => $dataset['saleDate'],
+                    "remarks" => $dataset['remarks'],
+                    "missingRemarks" => 'Valid',
+                    'tender' => $dataset['tender'],
+                    'isActive' => 1
+                ]
+            ]);
 
+            // Perform the update
             $data->update([
                 "storeID" => $dataset['storeID'],
                 "retekCode" => $dataset['retekCode'],
@@ -419,16 +441,22 @@ class CashDirectDepositReco extends Component {
                 "remarks" => $dataset['remarks'],
                 "missingRemarks" => 'Valid',
                 'tender' => $dataset['tender'],
-                'isActive' => 1
+                'isActive' => 1,
+                'modifiedBy' => auth()->user()->userUID,
+                'modifiedAt' => now()->format('Y-m-d')
             ]);
 
             DB::commit();
-            // calling the statement is enough for the update
+            Log::channel('cash-direct-deposit')->info('Successfully updated CashDepositReco', ['id' => $dataset['id']]);
             $this->emit('cash-deposit:success');
             return true;
 
         } catch (\Throwable $th) {
             DB::rollBack();
+            Log::channel('cash-direct-deposit')->error('Failed to update CashDepositReco', [
+                'id' => $dataset['id'],
+                'error' => $th->getMessage()
+            ]);
             $this->emit('cash-deposit:failed');
             return false;
         }
@@ -437,9 +465,21 @@ class CashDirectDepositReco extends Component {
 
 
 
+
+
+
+
     public function uploadExcelValidatedArray(array $dataset) {
-        
+        Log::channel('cash-direct-deposit')->debug('Starting uploadExcelValidatedArray method', ['dataset' => $dataset]);
+
+        // Check if the 'Unique Id' is not present for insertion
         if (!$dataset['Unique Id']) {
+            Log::channel('cash-direct-deposit')->info('Inserting new CashDepositReco', [
+                'Account No' => $dataset["Account No"],
+                'Store Id' => $dataset["Store Id"],
+                'Retek Code' => $dataset["Retek Code"]
+            ]);
+
             $res = CashDepositReco::insert([
                 "accountNo" => $dataset["Account No"],
                 "storeID" => $dataset["Store Id"],
@@ -456,18 +496,35 @@ class CashDirectDepositReco extends Component {
                 'isActive' => 1
             ]);
 
+            Log::channel('cash-direct-deposit')->info('Successfully inserted new CashDepositReco', [
+                'result' => $res
+            ]);
+
             return $res;
         }
 
-
+        // Proceed to update if 'Unique Id' is provided
         $data = CashDepositReco::find($dataset['Unique Id']);
 
+        if (!$data) {
+            Log::channel('cash-direct-deposit')->warning('CashDepositReco not found for update', ['Unique Id' => $dataset['Unique Id']]);
+            return false; // or handle as needed
+        }
 
-        // if ($data->storeID != null) {
-        //     $this->message = "File: Conflict - Trying to update a record where the storeID is not null - This action will be reported";
-        //     return false;
-        // }
-
+        Log::channel('cash-direct-deposit')->info('Updating CashDepositReco record', [
+            'Unique Id' => $dataset['Unique Id'],
+            'update_data' => [
+                "storeID" => $dataset['Store Id'],
+                "retekCode" => $dataset['Retek Code'],
+                "salesDate" => $this->format($dataset['Sales Date']),
+                "remarks" => $dataset['Remarks'],
+                "missingRemarks" => 'Valid',
+                'tender' => $dataset['Sales Tender'],
+                'isActive' => 1,
+                'modifiedBy' => auth()->user()->userUID,
+                'modifiedAt' => now()->format('Y-m-d')
+            ]
+        ]);
 
         $res = $data->update([
             "storeID" => $dataset['Store Id'],
@@ -479,9 +536,13 @@ class CashDirectDepositReco extends Component {
             'isActive' => 1
         ]);
 
+        Log::channel('cash-direct-deposit')->info('Successfully updated CashDepositReco', [
+            'Unique Id' => $dataset['Unique Id'],
+            'result' => $res
+        ]);
+
         return $res;
     }
-
 
 
 

@@ -112,12 +112,4 @@ class TrackerController extends Controller {
             'brandAndStore' => (new GeneralService)->brandAndStore(),
         ]);
     }
-
-    public function BankmisSummary(): View {
-        return view('app.commercial-head.tracker.bankmis-summary', [
-            'menus' => (new GeneralService)->menus(),
-            'tabs' => (new GeneralService)->tabs(),
-            'brandAndStore' => (new GeneralService)->brandAndStore(),
-        ]);
-    }
 }

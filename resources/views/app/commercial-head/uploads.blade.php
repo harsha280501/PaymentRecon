@@ -32,8 +32,8 @@
                     <x-app.commercial-head.uploads.all />
 
 
-                    {{-- <div class="col-lg-2 col-12 mt-3">
-                        <div class="entry-box1 p-3" >
+                    <div class="col-lg-2 col-12 mt-3">
+                        <div class="entry-box1 p-3">
                             <h2>Franchisee Debit</h2>
                             <div class="row">
                                 <div class="col-lg-12 col-6">
@@ -42,7 +42,7 @@
                             </div>
                         </div>
                         <x-modals.commercial-head.upload name="Franchisee Debit" id="franchiseeUpload" url="/chead/upload/franchisee-debit" exampleFileLink="{{ asset('public/sample/franchise-debit-sample.xlsx') }}" />
-                    </div> --}}
+                    </div>
                 </div>
             </section>
         </div>

@@ -17,6 +17,7 @@ use App\Http\Livewire\CommercialHead\Reports\BankMIS;
 
 
 
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -95,5 +96,4 @@ Route::get('/recon-search/{type}', function ($type) {
 })->name('reconSearch');
 
 Route::get('/search-tid', [BankMIS::class, 'searchTid'])->name('tidSearch');
-
-
+Route::get('/search-store', [BankMIS::class, 'searchStore'])->name('storeSearch');

@@ -171,3 +171,37 @@ idfcBankModalSubmitButton.addEventListener("click", async (e) => {
         window.location.reload();
     }, 2000);
 });
+
+//Opening Balance
+ 
+const openingBalanceModal = document.querySelector("#openingBalanceUploadModal");
+const openingBalanceModalSubmitButton = openingBalanceModal.querySelector("#uploadBtn");
+const openingBalanceModalFileUpload = openingBalanceModal.querySelector("#openingBalanceUploadModalFileUploadBtn");
+const openingBalanceModalLoader = openingBalanceModal.querySelector(".loader");
+ 
+/**
+* Main Submit Event
+*/
+openingBalanceModalSubmitButton.addEventListener("click", async (e) => {
+    openingBalanceModalLoader.style.display = "unset";
+    openingBalanceModalSubmitButton.setAttribute("disabled", true);
+    // upload file
+    const data = await mainUpload(
+        openingBalanceModal.dataset.url,
+        openingBalanceModalFileUpload.files[0]
+    );
+    // if not data, dont want to contineu
+    if (!data) {
+        openingBalanceModalSubmitButton.removeAttribute("disabled");
+        openingBalanceModalLoader.style.display = "none";
+        return false;
+    }
+    // show success message
+    succesMessageConfiguration("Successfully uploaded");
+    openingBalanceModalLoader.style.display = "none";
+    openingBalanceModalSubmitButton.removeAttribute("disabled");
+ 
+    setTimeout(() => {
+        window.location.reload();
+    }, 2000);
+});

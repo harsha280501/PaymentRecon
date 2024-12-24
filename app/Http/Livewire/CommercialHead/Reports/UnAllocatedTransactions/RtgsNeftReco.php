@@ -18,6 +18,7 @@ use App\Traits\WithExportDate;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\WithFileUploads;
 
 class RtgsNeftReco extends Component implements UseExcelDataset, WithHeaders {
@@ -333,7 +334,7 @@ class RtgsNeftReco extends Component implements UseExcelDataset, WithHeaders {
 
 
 
-    
+
 
 
     public function reader(string $path) {
@@ -431,18 +432,34 @@ class RtgsNeftReco extends Component implements UseExcelDataset, WithHeaders {
 
 
 
-
-
-
-
     public function save(array $dataset) {
 
+        Log::channel('rtgs-neft-logs')->debug('Starting save method', ['dataset' => $dataset]);
+
         $data = ModelsCashDepositReco::find($dataset['id']);
+        Log::channel('rtgs-neft-logs')->debug('Fetched ModelsCashDepositReco record', ['data' => $data]);
+
         $_store = Store::where('Store ID', $dataset['storeID'])->first();
+        Log::channel('rtgs-neft-logs')->debug('Fetched Store record', ['store' => $_store]);
+
         $query = $this->query($dataset['tender']);
+        Log::channel('rtgs-neft-logs')->debug('Query prepared for tender', ['tender' => $dataset['tender'], 'query' => $query]);
 
         try {
+            Log::channel('rtgs-neft-logs')->info('Initiating RTGS/NEFT transaction process', ['dataset' => $dataset]);
+
             DB::beginTransaction();
+            Log::channel('rtgs-neft-logs')->debug('Transaction started');
+
+            Log::channel('rtgs-neft-logs')->debug('Inserting data into the transaction table', [
+                'storeID' => $dataset['storeID'],
+                'retekCode' => $dataset['retekCode'],
+                'colBank' => in_array($dataset['tender'], ['Cash']) ? 'HDFC' : $dataset['tender'],
+                'brand' => $_store->{'Brand Desc'},
+                'depositDate' => $data->depositDate,
+                'depositAmount' => ($data->creditAmount == 0 || !$data->creditAmount) ? $data->debitAmount : $data->creditAmount,
+                'remarks' => 'RTGS/NEFT Transaction'
+            ]);
 
             $query->insert([
                 'storeID' => $dataset['storeID'],
@@ -454,7 +471,18 @@ class RtgsNeftReco extends Component implements UseExcelDataset, WithHeaders {
                 'remarks' => 'RTGS/NEFT Transaction'
             ]);
 
+            Log::channel('rtgs-neft-logs')->info('RTGS/NEFT transaction inserted successfully', ['storeID' => $dataset['storeID'], 'retekCode' => $dataset['retekCode']]);
 
+            Log::channel('rtgs-neft-logs')->debug('Updating ModelsCashDepositReco record', [
+                'storeID' => $dataset['storeID'],
+                'retekCode' => $dataset['retekCode'],
+                'salesDate' => $this->format($dataset['saleDate']),
+                'tender' => in_array($dataset['tender'], ['Cash']) ? 'HDFC' : $dataset['tender'],
+                'remarks' => $dataset['remarks'],
+                'missingRemarks' => 'Valid',
+                'isActive' => 1,
+                'isMovedAllBank' => 1,
+            ]);
 
             $data->update([
                 "storeID" => $dataset['storeID'],
@@ -465,25 +493,32 @@ class RtgsNeftReco extends Component implements UseExcelDataset, WithHeaders {
                 "missingRemarks" => 'Valid',
                 'isActive' => 1,
                 'isMovedAllBank' => 1,
+                'modifiedBy' => auth()->user()->userUID,
+                'modifiedAt' => now()->format('Y-m-d')
             ]);
 
-
-
             DB::commit();
-            // calling the statement is enough for the update
-            $this->emit('cash-deposit:success');
-            return true;
+            Log::channel('rtgs-neft-logs')->info('RTGS/NEFT transaction committed successfully', ['storeID' => $dataset['storeID'], 'retekCode' => $dataset['retekCode']]);
 
+            $this->emit('cash-deposit:success');
+            Log::channel('rtgs-neft-logs')->debug('Event cash-deposit:success emitted');
+
+            return true;
 
         } catch (\Throwable $th) {
             DB::rollBack();
+            Log::channel('rtgs-neft-logs')->error('RTGS/NEFT transaction failed', [
+                'dataset' => $dataset,
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+            ]);
+
             $this->emit('cash-deposit:failed', ['message' => $th->getMessage()]);
+            Log::channel('rtgs-neft-logs')->debug('Event cash-deposit:failed emitted', ['message' => $th->getMessage()]);
+
             return false;
         }
-
     }
-
-
 
 
 
@@ -491,14 +526,43 @@ class RtgsNeftReco extends Component implements UseExcelDataset, WithHeaders {
 
     public function uploadExcelValidatedArray(array $dataset) {
 
-        $data = ModelsCashDepositReco::find($dataset['Store Id']);
-        $_store = Store::where('Store ID', $dataset['Store Id'])->first();
-        $query = $this->query($dataset['Tender']);
+        Log::channel('rtgs-neft-logs')->debug('Starting uploadExcelValidatedArray method', ['dataset' => $dataset]);
 
+        $data = ModelsCashDepositReco::find($dataset['Store Id']);
+        Log::channel('rtgs-neft-logs')->debug('Fetched ModelsCashDepositReco record', ['data' => $data]);
+
+        $_store = Store::where('Store ID', $dataset['Store Id'])->first();
+        Log::channel('rtgs-neft-logs')->debug('Fetched Store record', ['store' => $_store]);
+
+        $query = $this->query($dataset['Tender']);
+        Log::channel('rtgs-neft-logs')->debug('Query prepared for tender', ['tender' => $dataset['Tender'], 'query' => $query]);
+
+        // Conflict check
         if ($data->storeID != null) {
+            Log::channel('rtgs-neft-logs')->warning('Conflict: Store ID is not null, operation aborted', [
+                'storeID' => $data->storeID,
+                'dataset' => $dataset
+            ]);
+
             $this->message = "File: Conflict - Trying to update a record where the storeID is not null - This action will be reported";
             return false;
         }
+
+        Log::channel('rtgs-neft-logs')->info('No conflict detected, proceeding with data insertion', [
+            'storeID' => $dataset['Store Id'],
+            'retekCode' => $dataset['Retek Code']
+        ]);
+
+        // Insert operation
+        Log::channel('rtgs-neft-logs')->debug('Inserting transaction into database', [
+            'storeID' => $dataset['Store Id'],
+            'retekCode' => $dataset['Retek Code'],
+            'colBank' => $dataset['Tender'] == 'Cash' ? 'HDFC' : $dataset['Tender'],
+            'brand' => $_store->{'Brand Desc'},
+            'depositDate' => $data->depositDate,
+            'depositAmount' => $data->creditAmount,
+            'remarks' => 'RTGS/NEFT Transaction'
+        ]);
 
         $query->insert([
             'storeID' => $dataset['Store Id'],
@@ -510,6 +574,23 @@ class RtgsNeftReco extends Component implements UseExcelDataset, WithHeaders {
             'remarks' => 'RTGS/NEFT Transaction'
         ]);
 
+        Log::channel('rtgs-neft-logs')->info('Transaction inserted successfully', [
+            'storeID' => $dataset['Store Id'],
+            'retekCode' => $dataset['Retek Code']
+        ]);
+
+        // Update operation
+        Log::channel('rtgs-neft-logs')->debug('Updating ModelsCashDepositReco record', [
+            'storeID' => $dataset['Store Id'],
+            'retekCode' => $dataset['Retek Code'],
+            'salesDate' => $this->format($dataset['Sales Date']),
+            'tender' => $dataset['Tender'] == 'Cash' ? 'HDFC' : $dataset['Tender'],
+            'remarks' => 'Uploaded from Excel',
+            'missingRemarks' => 'Valid',
+            'isActive' => 1,
+            'isMovedAllBank' => 1
+        ]);
+
         $res = $data->update([
             "storeID" => $dataset['Store Id'],
             "retekCode" => $dataset['Retek Code'],
@@ -519,7 +600,25 @@ class RtgsNeftReco extends Component implements UseExcelDataset, WithHeaders {
             "missingRemarks" => 'Valid',
             'isActive' => 1,
             'isMovedAllBank' => 1,
+            'modifiedBy' => auth()->user()->userUID,
+            'modifiedAt' => now()->format('Y-m-d')
         ]);
+
+        if ($res) {
+            Log::channel('rtgs-neft-logs')->info('RTGS/NEFT transaction successfully updated', [
+                'storeID' => $dataset['Store Id'],
+                'retekCode' => $dataset['Retek Code'],
+                'update_result' => $res
+            ]);
+        } else {
+            Log::channel('rtgs-neft-logs')->error('Failed to update RTGS/NEFT transaction', [
+                'storeID' => $dataset['Store Id'],
+                'retekCode' => $dataset['Retek Code'],
+                'update_result' => $res
+            ]);
+        }
+
+        Log::channel('rtgs-neft-logs')->debug('Exiting uploadExcelValidatedArray method', ['result' => $res]);
 
         return $res;
     }

@@ -16,6 +16,7 @@ use App\Traits\UseOrderBy;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Fluent;
 use Livewire\WithFileUploads;
 
@@ -342,25 +343,31 @@ class WalletReconciliation extends Component {
 
 
 
-
     public function uploadExcelData(array $dataset) {
         try {
+            Log::channel('wallet-recon')->info('Starting upload of Excel data', [
+                'reconItem' => $dataset['reconItem'],
+                'storeID' => $dataset['storeID'],
+                'salesDate' => $dataset['salesDate'],
+            ]);
 
             $_reco = \App\Models\Process\SAP\WalletRecon::where('walletSalesRecoUID', '=', $dataset['reconItem'])->first();
 
             if (!$_reco || !$_reco->depositAmount) {
-                return true;
+                Log::channel('wallet-recon')->info('No reconciliation record found or deposit amount is zero', [
+                    'reconItem' => $dataset['reconItem']
+                ]);
+                return true; // No further processing required
             }
 
             $calc = $_reco->cardSale - ($_reco->depositAmount - $_reco->adjAmount);
+            Log::channel('wallet-recon')->info('Calculated difference between sales and deposit', [
+                'calc' => $calc
+            ]);
 
-
-
-            # get the approval process records
+            # Get the approval process records
             $records = WalletReconApproval::where('walletSalesRecoUID', '=', $dataset['reconItem'])
                 ->where('approveStatus', '=', 'Pending');
-
-
 
             $records->update([
                 'approveStatus' => 'Rejected',
@@ -370,22 +377,30 @@ class WalletReconciliation extends Component {
                 'cheadRemarks' => 'Uploaded by Commercial head'
             ]);
 
+            Log::channel('wallet-recon')->info('Updated approval process records', [
+                'reconItem' => $dataset['reconItem'],
+                'approvedBy' => auth()->user()->userUID
+            ]);
 
-
-            # update the item as
+            # Update the item
             $_reco->update([
                 'adjAmount' => -1 * $_reco->depositAmount,
                 'status' => ($calc <= -100 && $calc >= 100) ? 'Matched' : 'Not Matched',
-                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Compeleted' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
+                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Completed' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
                 'diffSaleDeposit' => $calc,
                 'storeUpdateRemarks' => 'Updated Store ID - ' . $_reco->storeUID . ' to ' . $dataset['storeID'] .
                     ' and Sales Date - ' . $_reco->transactionDate . ' to ' . $dataset['salesDate'] .
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
 
+            Log::channel('wallet-recon')->info('Updated wallet reconciliation record', [
+                'reconItem' => $dataset['reconItem'],
+                'adjAmount' => -1 * $_reco->depositAmount,
+                'status' => ($calc <= -100 && $calc >= 100) ? 'Matched' : 'Not Matched',
+                'reconStatus' => ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
+            ]);
 
-
-            # insert new item to the recon
+            # Insert new item to the recon
             \App\Models\Process\SAP\WalletRecon::insert([
                 'transactionDate' => Carbon::parse($dataset['salesDate'])->format('Y-m-d'),
                 'depositDate' => $_reco->depositDate,
@@ -399,6 +414,11 @@ class WalletReconciliation extends Component {
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
 
+            Log::channel('wallet-recon')->info('Inserted new wallet reconciliation record', [
+                'storeID' => $dataset['storeID'],
+                'salesDate' => $dataset['salesDate'],
+                'collectionBank' => $dataset['colBank'],
+            ]);
 
             # Update the Reconciliation Data
             DB::statement('sp_UpdateWalletReconcilation :storeID, :saleDate, :depositDate, :bank, :recoID', [
@@ -409,12 +429,24 @@ class WalletReconciliation extends Component {
                 'recoID' => $dataset['reconItem']
             ]);
 
+            Log::channel('wallet-recon')->info('Updated wallet reconciliation data in stored procedure', [
+                'storeID' => $dataset['storeID'],
+                'saleDate' => $dataset['salesDate'],
+                'depositDate' => $_reco->depositDt,
+                'bank' => $dataset['colBank'],
+                'recoID' => $dataset['reconItem']
+            ]);
         } catch (\Throwable $th) {
-
-            dd($th->getMessage());
+            Log::channel('wallet-recon')->error('Failed to upload Excel data', [
+                'message' => $th->getMessage(),
+                'reconItem' => $dataset['reconItem'],
+            ]);
             return false;
         }
 
+        Log::channel('wallet-recon')->info('Successfully uploaded Excel data', [
+            'reconItem' => $dataset['reconItem']
+        ]);
         return true;
     }
 
@@ -424,33 +456,29 @@ class WalletReconciliation extends Component {
 
 
 
-
     /**
-     * Upate a recon item
+     * Update a recon item
      * @param array $dataset
      * @return bool
      */
     public function recon(array $dataset) {
-
         try {
             DB::beginTransaction();
+            Log::channel('wallet-recon')->info('Recon process started', ['dataset' => $dataset]);
 
             $_reco = \App\Models\Process\SAP\WalletRecon::where('walletSalesRecoUID', '=', $dataset['reconItem'])->first();
 
-
             if (!$_reco || !$_reco->depositAmount) {
+                Log::channel('wallet-recon')->warning('Recon item not found or deposit amount is zero', ['reconItem' => $dataset['reconItem']]);
                 return true;
             }
 
             $calc = ($_reco->cardSale - ($_reco->depositAmount - $_reco->adjAmount));
+            Log::channel('wallet-recon')->info('Calculation performed', ['calculation' => $calc]);
 
-
-
-            # get the approval process records
+            // Get the approval process records
             $records = WalletReconApproval::where('walletSalesRecoUID', '=', $dataset['reconItem'])
                 ->where('approveStatus', '=', 'Pending');
-
-
 
             $records->update([
                 'approveStatus' => 'Rejected',
@@ -460,22 +488,22 @@ class WalletReconciliation extends Component {
                 'cheadRemarks' => 'Uploaded by Commercial head'
             ]);
 
+            Log::channel('wallet-recon')->info('Approval records updated', ['reconItem' => $dataset['reconItem']]);
 
-
-            # update the item as
+            // Update the item as
             $_reco->update([
                 'adjAmount' => -1 * $_reco->depositAmount,
                 'status' => ($calc <= -100 && $calc >= 100) ? 'Matched' : 'Not Matched',
-                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Compeleted' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
+                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Completed' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
                 'diffSaleDeposit' => $calc,
                 'storeUpdateRemarks' => 'Updated Store ID - ' . $_reco->storeUID . ' to ' . $dataset['storeID'] .
                     ' and Sales Date - ' . $_reco->transactionDate . ' to ' . $dataset['salesDate'] .
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
 
+            Log::channel('wallet-recon')->info('Recon item updated', ['reco' => $_reco]);
 
-
-            # insert new item to the recon
+            // Insert new item to the recon
             \App\Models\Process\SAP\WalletRecon::insert([
                 'transactionDate' => Carbon::parse($dataset['salesDate'])->format('Y-m-d'),
                 'depositDate' => $_reco->depositDate,
@@ -489,8 +517,9 @@ class WalletReconciliation extends Component {
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
 
+            Log::channel('wallet-recon')->info('New recon item inserted');
 
-            # Update the Reconciliation Data
+            // Update the Reconciliation Data
             DB::statement('sp_UpdateWalletReconcilation :storeID, :saleDate, :depositDate, :bank, :recoID', [
                 'storeID' => $dataset['storeID'],
                 'saleDate' => $dataset['salesDate'],
@@ -499,13 +528,17 @@ class WalletReconciliation extends Component {
                 'recoID' => $dataset['reconItem']
             ]);
 
+            Log::channel('wallet-recon')->info('Reconciliation data updated', ['storeID' => $dataset['storeID'], 'saleDate' => $dataset['salesDate']]);
+
         } catch (\Throwable $th) {
             DB::rollBack();
+            Log::channel('wallet-recon')->error('Recon process failed', ['message' => $th->getMessage()]);
             $this->emit('recon:failed', ['message' => $th->getMessage()]);
             return false;
         }
 
         DB::commit();
+        Log::channel('wallet-recon')->info('Recon process completed successfully');
         $this->emit('recon:updated');
         return true;
     }
@@ -525,7 +558,7 @@ class WalletReconciliation extends Component {
         fputcsv($file, ['Correction Entry']);
         fputcsv($file, ['Existing MIS Data', '', '', '', '', '', '', '', '', '', '', '', '', 'Rectification Entry', '', '', '']);
         fputcsv($file, $headers); # adding headers to the excel
-        
+
         foreach ($data as $row) {
             $row = (array) $row;
             fputcsv($file, $row);

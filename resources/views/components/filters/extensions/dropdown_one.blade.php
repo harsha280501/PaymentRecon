@@ -14,6 +14,7 @@
             this.selectFilterOne.val("").trigger("change");
         })
     }
+
 </script>
 
 <div x-init="_selectFilterExtOne" wire:ignore>
@@ -21,11 +22,11 @@
 
         <option></option>
         <option value=" ">All</option>
-        @foreach ($dataset as $item)
-            @php
-                $item = (array) $item;
-            @endphp
-            <option value="{{ $item[$keys] }}">{{ $item[$keys] }}</option>
+        @foreach($dataset as $item)
+        @php
+        $item = (array) $item;
+        @endphp
+        <option value="{{ $item[$keys] }}">{{ $item[$keys] }}</option>
         @endforeach
     </select>
 </div>

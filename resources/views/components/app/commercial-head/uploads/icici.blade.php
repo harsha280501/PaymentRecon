@@ -1,11 +1,14 @@
-<div class="col-lg-2 col-6">
+<div class="col-lg-4 col-12">
     <div class="entry-box1 p-3">
         <h2>ICICI</h2>
         <div class="row">
-            <div class="col-lg-12 col-12">
-                <button class="btn btn-icici" data-bs-toggle="modal" data-bs-target="#icicicreditUploadModal">
-                    <i class="fa fa-plus mb-1" aria-hidden="true"></i><br>Card
-                </button>
+            <div class="col-lg-6 col-6">
+                <button data-bs-toggle="modal" data-bs-target="#iciciUploadModal" class="btn btn-icici"><i
+                        class="fa fa-plus mb-1" aria-hidden="true"></i><br>Cash</button>
+            </div>
+            <div class="col-lg-6 col-6">
+                <button class="btn btn-icici" data-bs-toggle="modal" data-bs-target="#icicicreditUploadModal"><i
+                        class="fa fa-plus mb-1" aria-hidden="true"></i><br>Card</button>
             </div>
             <div class="col-lg-4 col-4" style="display: none;">
                 <button class="btn btn-icici"><i class="fa fa-search" aria-hidden="true"></i></button>

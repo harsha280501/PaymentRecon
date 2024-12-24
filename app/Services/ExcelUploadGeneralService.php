@@ -135,16 +135,11 @@ class ExcelUploadGeneralService
 
 
         if ($data_) {
-            if (!self::isGreaterThan(date: $transactionDt, dateToCompare: $data_->conversionDt)) {
-                $main_["retekCode"] = !($data_->oldRetekCode) ? $data_->newRetekCode : $data_->oldRetekCode;
-                $main_["storeID"] = $data_->storeID;
-                $main_["brand"] = $data_->brandName;
-            } else {
+          
                 $main_["retekCode"] = $data_->newRetekCode;
                 $main_["storeID"] = $data_->storeID;
                 $main_["brand"] = $data_->brandName;
             }
-        }
 
         return $main_;
     }
@@ -191,17 +186,12 @@ class ExcelUploadGeneralService
         $reteckCount = $reteckselect->count();
 
         if ($reteckCount > 0) {
-            if (!self::isGreaterThan(date: $transactionDt, dateToCompare: $reteckselect[0]->conversionDt)) {
-                $storedata = $reteckselect->toArray()[0];
-                $data['retekCode'] = !($storedata['oldRetekCode']) ? $storedata['newRetekCode'] : $storedata['oldRetekCode'];
-                $data['storeID'] = $storedata['storeID'];
-                $data['brandName'] = $storedata['brandName'];
-            } else {
+          
                 $storedata = $reteckselect->toArray()[0];
                 $data['retekCode'] = $storedata['newRetekCode'];
                 $data['storeID'] = $storedata['storeID'];
                 $data['brandName'] = $storedata['brandName'];
-            }
+            
         }
 
         return $data;
@@ -334,15 +324,11 @@ class ExcelUploadGeneralService
             ->first() : null;
 
         if ($data_) {
-            if (!self::isGreaterThan(date: $transactionDt, dateToCompare: $data_->conversionDt)) {
-                $main_["retekCode"] = !($data_->oldRetekCode) ? $data_->newRetekCode : $data_->oldRetekCode;
-                $main_["storeID"] = $data_->storeID;
-                $main_["brand"] = $data_->brandName;
-            } else {
+         
                 $main_["retekCode"] = $data_->newRetekCode;
                 $main_["storeID"] = $data_->storeID;
                 $main_["brand"] = $data_->brandName;
-            }
+            
         }
 
         return $main_;

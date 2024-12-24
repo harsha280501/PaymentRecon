@@ -28,6 +28,10 @@
                     <x-app.commercial-head.bank-statements-uploads.idfc />
                 </div>
             </section>
+            <section id="entry" style="margin-top: 20px;">
+            <div class="row mb-3">{{-- Opening Balance --}}
+            <x-app.commercial-head.bank-statements-uploads.openingbalance /></div>
+            </section>
         </div>
     </div>
 </div>

@@ -13,10 +13,10 @@ use App\Services\GeneralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
-class DirectDepositController extends Controller
-{
+class DirectDepositController extends Controller {
 
 
 
@@ -25,8 +25,7 @@ class DirectDepositController extends Controller
      * get the filename dynamically
      * @return string
      */
-    protected function fileName(string $originalFileName, string $extension)
-    {
+    protected function fileName(string $originalFileName, string $extension) {
         return $originalFileName . "_" . Carbon::now()->format('d-m-Y') . "_" . time() . '.' . $extension;
     }
 
@@ -35,8 +34,7 @@ class DirectDepositController extends Controller
      * Process
      * @return \Illuminate\View\View
      */
-    public function index(): View
-    {
+    public function index(): View {
         return view('app.storeUser.direct-deposit.index', [
             'menus' => (new GeneralService)->menus(),
             'tabs' => (new GeneralService)->tabs(),
@@ -45,14 +43,15 @@ class DirectDepositController extends Controller
     }
 
 
-    public function create(Request $request)
-    {
+    public function create(Request $request) {
+        Log::channel('direct-deposit')->info('Direct deposit creation process started', [
+            'request_data' => $request->all()
+        ]);
 
         try {
-
             DB::beginTransaction();
-//dd($request->salesTender);
 
+            // Check for duplicate entries
             $item = DirectDeposit::where('depositSlipNo', $request->depositSlipNo)
                 ->where('amount', $request->amount)
                 ->where('directDepositDate', $request->directDepositDate)
@@ -61,19 +60,25 @@ class DirectDepositController extends Controller
                 ->where('storeID', auth()->user()->storeUID)
                 ->exists();
 
-
             if ($item) {
                 DB::rollBack();
+                Log::channel('direct-deposit')->warning('Duplicate entry found', [
+                    'depositSlipNo' => $request->depositSlipNo,
+                    'amount' => $request->amount,
+                    'directDepositDate' => $request->directDepositDate,
+                    'bank' => $request->bank,
+                    'accountNo' => $request->accountNo,
+                ]);
                 return response()->json(['message' => 'Duplicate Entry Found'], 500);
             }
 
-
-            // uploading the file
+            // Uploading the file
             $file = $request->file('depositSlipProof');
             $filename = $this->fileName($file->getClientOriginalName(), $file->getClientOriginalExtension());
             $file->move(storage_path('app/public/direct-deposit'), $filename);
+            Log::channel('direct-deposit')->info('File uploaded successfully', ['filename' => $filename]);
 
-
+            // Inserting data into the database
             DirectDeposit::insert([
                 ...$request->except(['depositSlipProof', 'salesDateTo']),
                 'storeID' => auth()->user()->store()['storeUID'],
@@ -81,16 +86,25 @@ class DirectDepositController extends Controller
                 'status' => 'Pending for Approval',
                 'depositSlipProof' => $filename,
                 'createdDate' => now()->format('Y-m-d'),
-                'salesTender' =>$request->salesTender,
+                'createdBy' => Auth::user()->userUID,
+                'salesTender' => $request->salesTender,
             ]);
 
             DB::commit();
-            return response()->json(['message' => 'Success'], 200);
+            Log::channel('direct-deposit')->info('Direct deposit created successfully', [
+                'storeID' => auth()->user()->storeUID,
+                'depositSlipNo' => $request->depositSlipNo,
+            ]);
 
-            // commit the transaction
+            return response()->json(['message' => 'Success'], 200);
         } catch (\Throwable $th) {
             DB::rollBack();
+            Log::channel('direct-deposit')->error('Error occurred while creating direct deposit', [
+                'error' => $th->getMessage(),
+                'request_data' => $request->all()
+            ]);
             return response()->json(['message' => $th->getMessage()], 500);
         }
     }
+
 }

@@ -291,6 +291,13 @@ $commertialHeadRoutesConfigurationBankstatementUploadICICI = [
     'controller' => "ICICIController",
     "as" => 'commertial-head.',
 ];
+$commertialHeadOpeningBalanceUpload = [
+    'namespace' => 'App\Http\Controllers\CommercialHead\BankStatementUpload',
+    'middleware' => ['auth', 'commertial-head'],
+    'prefix' => 'chead/',
+    'controller' => "OpeningBalanceController",
+    "as" => 'commertial-head.',
+];
 use App\Http\Controllers\CommercialHead\Unallocated\Upload\CardController;
  
 $commertialHeadRoutesConfigurationUnalloactedUpload = [
@@ -525,4 +532,7 @@ Route::group($commertialHeadRoutesConfigurationUnalloactedUploadWallet, function
 Route::group($commertialHeadRoutesConfigurationUnalloactedUploadCash, function () {
  
     Route::post('/cash', 'importUnallocatedCash');
+});
+Route::group($commertialHeadOpeningBalanceUpload, function () {
+    Route::post('/upload/bank-statement-upload/opbalance', 'openingBalanceUpload');
 });

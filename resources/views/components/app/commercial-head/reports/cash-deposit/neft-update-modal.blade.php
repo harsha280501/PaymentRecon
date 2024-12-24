@@ -18,7 +18,7 @@
                 </div>
 
                 <div wire:ignore class="modal-body" x-data="{
-                    errors: null,
+                    errors: { storeID: null, retekCode: null, saleDate: null, remarks: null, tender: null },
 
                     remarks: '{{ $data->remarks }}',
                     storeID: '{{ $data->storeID }}',
@@ -166,7 +166,7 @@
                                 <option value="AMEX Card">AMEX Card</option>
                                 <option value="HDFC UPI">HDFC UPI</option>
                                 <option value="WALLET PAYTM">WALLET PAYTM</option>
-                                <option value="WALLET PHONEPE">WALLET PHONEPE</option>
+                                <option value="WALLET PHONEPAY">WALLET PHONEPAY</option>
 
                             </select>
                             <span x-text="errors.tender" class="error"></span>

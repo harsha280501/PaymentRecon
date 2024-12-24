@@ -43,10 +43,8 @@
 
             <!-- Start Date -->
             <div>
-                <input x-model="start" id="startDate" class="date-filter w-mob-100" type="date"
-                :min="minDate"
-                    :max="maxDate"
-                    placeholder="Select start date">
+                <input x-model="start" id="startDate" class="date-filter w-mob-100" type="date" :min="minDate"
+                    :max="maxDate" placeholder="Select start date">
             </div>
 
             <!-- End Date -->

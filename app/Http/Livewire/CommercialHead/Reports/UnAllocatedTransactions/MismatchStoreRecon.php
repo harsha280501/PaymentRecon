@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\MFLInwardStoreIDMissingTransactions;
 use App\Models\Store;
 use App\Traits\UseHelpers;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class MismatchStoreRecon extends Component {
@@ -119,7 +120,7 @@ class MismatchStoreRecon extends Component {
 
 
 
-
+    // Log::channel(' mismatch-store-recon')->info('Data Recieved: ', ['Data' => $request->all()]);
 
 
 
@@ -164,7 +165,7 @@ class MismatchStoreRecon extends Component {
 
     public function query(string $bank) {
 
-        if (in_array($bank, ['HDFC', 'IDFC', 'ICICI Cash', 'SBICASHMIS', 'SBICASHMumbai', 'SBI Cash', 'Axis Cash'])) {
+        if (in_array($bank, ['HDFC', 'IDFC', 'ICICI Cash', 'SBICASHMIS', 'SBICASHMumbai', 'SBI Cash', 'AXIS Cash'])) {
             return DB::table('MFL_Inward_AllBankCashMIS');
         }
 
@@ -259,7 +260,8 @@ class MismatchStoreRecon extends Component {
 
         // message to display when the file is uploaded
         $this->message = 'File : Loading ...';
-
+        Log::channel(' mismatch-store-recon')->info('Bulk Upload');
+        Log::channel(' mismatch-store-recon')->info('- initiated ');
         // save the file and validate
         $filename = $this->importFile->store('un-allocated');
         $file_path = storage_path() . '/app/public/' . $filename;
@@ -267,6 +269,7 @@ class MismatchStoreRecon extends Component {
         $sheet = $this->reader($file_path);
         $this->headers = $sheet[1];
         unset($sheet[1]); // removing the header from the array
+        Log::channel(' mismatch-store-recon')->info('- File Read ', ['data' => json_encode($sheet)]);
 
         $this->message = 'File: Validating ...';
         $index = 2;
@@ -277,9 +280,12 @@ class MismatchStoreRecon extends Component {
 
             foreach ($sheet as $item) {
 
+                Log::channel(' mismatch-store-recon')->info('- Processing Line ', ['data' => json_encode($item)]);
+
                 $data = $this->withHeaders($this->headers, $item);
 
                 if (!$this->validateArray($data, $index)) {
+                    Log::channel(' mismatch-store-recon')->info('- Validation Error ', ['data' => json_encode($item)]);
                     return false;
                 }
 
@@ -290,6 +296,7 @@ class MismatchStoreRecon extends Component {
                     return false;
                 }
 
+                Log::channel(' mismatch-store-recon')->info('- Record uploaded to DB ', ['data' => json_encode($item)]);
                 $index++;
             }
 
@@ -298,6 +305,8 @@ class MismatchStoreRecon extends Component {
             return true;
         } catch (\Throwable $th) {
             DB::rollback();
+
+            Log::channel(' mismatch-store-recon')->info('- Error Occured ', ['data' => json_encode($th)]);
             $this->message = 'File: Server error ... ' . $th->getMessage() . '- The Data updated by using this file will be reverted back to its original state :)';
             return false;
         }
@@ -312,40 +321,69 @@ class MismatchStoreRecon extends Component {
      */
     public function uploadExcelValidatedArray(array $dataset) {
 
+        Log::channel('mismatch-store-recon')->debug('Starting uploadExcelValidatedArray method', ['dataset' => $dataset]);
+
         if (!$dataset['New Tender']) {
+            Log::channel('mismatch-store-recon')->info('Bank Name Mismatch - New Tender is empty', ['data' => $dataset]);
             return true;
         }
 
-
-
-        if (!in_array($dataset['New Tender'], ["AXIS Cash", "ICICI Cash", "HDFC", "SBICASHMumbai", "SBICASHMIS", "IDFC", "HDFC Card", "ICICI Card", "SBI Card", "Amex Card", "HDFC UPI", "WALLET PAYTM", "WALLET PHONEPAY"])) {
+        if (!in_array($dataset['New Tender'], [
+            "AXIS Cash", "ICICI Cash", "HDFC", "SBICASHMumbai", "SBICASHMIS",
+            "IDFC", "HDFC Card", "ICICI Card", "SBI Card", "AMEX Card",
+            "HDFC UPI", "WALLET PAYTM", "WALLET PHONEPAY"
+        ])) {
+            Log::channel('mismatch-store-recon')->warning('Invalid Collection Bank - Bank Name Mismatch', ['data' => $dataset]);
             $this->emit('unallocated:failed', 'Invalid Collection Bank');
             return false;
         }
 
-
-        // find the record
+        Log::channel('mismatch-store-recon')->debug('Searching for record in MFLInwardStoreIDMissingTransactions', ['UID' => $dataset['UID']]);
         $_main = MFLInwardStoreIDMissingTransactions::find($dataset['UID']);
 
         if (!$_main) {
+            Log::channel('mismatch-store-recon')->warning('Record not found in MFLInwardStoreIDMissingTransactions', ['UID' => $dataset['UID']]);
             return false;
         }
 
+        Log::channel('mismatch-store-recon')->debug('Executing query based on New Tender', ['New Tender' => $dataset['New Tender']]);
         $query = $this->query($dataset['New Tender']);
 
         if (!$query) {
+            Log::channel('mismatch-store-recon')->warning('Query result is empty for New Tender', ['New Tender' => $dataset['New Tender']]);
             return true;
         }
 
-
-        
+        Log::channel('mismatch-store-recon')->debug('Fetching Store record', ['storeID' => $dataset['New Store ID']]);
         $_store = Store::where('Store ID', $dataset['New Store ID'])->first();
-        
+
+        if (!$_store) {
+            Log::channel('mismatch-store-recon')->warning('Store not found', ['storeID' => $dataset['New Store ID']]);
+            return false;
+        }
+
+        Log::channel('mismatch-store-recon')->info('Updating StoreID missing transaction record', [
+            'isInserted' => 1,
+            'updatedStoreID' => $dataset['New Store ID'],
+            'updatedRetekCode' => $dataset['New Reteck Code'],
+            'updatedTender' => $dataset['New Tender']
+        ]);
+
         $_main->update([
             'isInserted' => 1,
-            "updatedStoreID" => $dataset['storeID'],
-            "updatedRetekCode" => $dataset['retekCode'],
-            "updatedTender" => $dataset['colBank']
+            "updatedStoreID" => $dataset['New Store ID'],
+            "updatedRetekCode" => $dataset['New Reteck Code'],
+            "updatedTender" => $dataset['New Tender']
+        ]);
+
+        Log::channel('mismatch-store-recon')->debug('Inserting new record into query', [
+            'storeID' => $dataset['New Store ID'],
+            'retekCode' => $dataset['New Reteck Code'],
+            'colBank' => $dataset['New Tender'],
+            'brand' => $_store->{'Brand Desc'},
+            'depositDate' => $_main->depositDate,
+            'depositAmount' => $_main->depositAmount,
+            'remarks' => 'Unallocated Insert'
         ]);
 
         $query->insert([
@@ -358,11 +396,9 @@ class MismatchStoreRecon extends Component {
             'remarks' => 'Unallocated Insert'
         ]);
 
+        Log::channel('mismatch-store-recon')->info('Update Successful', ['data' => $dataset]);
         return true;
     }
-
-
-
 
 
     public function validateArray(array $data, int $rowNum) {
@@ -393,45 +429,71 @@ class MismatchStoreRecon extends Component {
 
 
 
-
     public function recon(array $dataset) {
 
+        Log::channel('mismatch-store-recon')->debug('Starting recon method', ['dataset' => $dataset]);
 
-        if (!in_array($dataset['colBank'], ["AXIS Cash", "ICICI Cash", "HDFC", "SBICASHMumbai", "SBICASHMIS", "IDFC", "HDFC Card", "ICICI Card", "SBI Card", "Amex Card", "HDFC UPI", "WALLET PAYTM", "WALLET PHONEPAY"])) {
+        if (!in_array(trim($dataset['colBank']), [
+            "AXIS Cash", "ICICI Cash", "HDFC", "SBICASHMumbai", "SBICASHMIS",
+            "IDFC", "HDFC Card", "ICICI Card", "SBI Card", "AMEX Card",
+            "HDFC UPI", "WALLET PAYTM", "WALLET PHONEPAY"
+        ])) {
+            Log::channel('mismatch-store-recon')->info('Bank Name Mismatch', ['data' => $dataset]);
             $this->emit('unallocated:failed', 'Invalid Collection Bank');
             return false;
         }
 
-        
-
         try {
+            Log::channel('mismatch-store-recon')->debug('Initiating transaction');
 
             DB::beginTransaction();
-
             $query = $this->query($dataset['colBank']);
 
+            Log::channel('mismatch-store-recon')->info('Recon - Single item update started');
+            Log::channel('mismatch-store-recon')->info('Incoming dataset', ['data' => $dataset]);
 
             if (!$query) {
+                Log::channel('mismatch-store-recon')->warning('Invalid Collection Bank during query execution', ['data' => $dataset]);
                 $this->emit('unallocated:failed', 'Invalid Collection Bank');
                 return true;
             }
 
+            Log::channel('mismatch-store-recon')->debug('Fetching StoreID missing transaction record', ['storeMissingUID' => $dataset['id']]);
             $_data = MFLInwardStoreIDMissingTransactions::where('storeMissingUID', $dataset['id'])->first();
+            Log::channel('mismatch-store-recon')->info('Fetched missing store ID data', ['data' => $_data]);
 
-            if (!$query) {
+            if (!$_data) {
+                Log::channel('mismatch-store-recon')->warning('No data found for the given Store Missing UID', ['data' => $dataset]);
                 $this->emit('unallocated:failed', 'Unable to find the data');
                 return true;
             }
 
+            Log::channel('mismatch-store-recon')->debug('Fetching Store record', ['storeID' => $dataset['storeID']]);
             $_store = Store::where('Store ID', $dataset['storeID'])->first();
+            Log::channel('mismatch-store-recon')->info('Fetched Store data', ['store' => $_store]);
 
+            Log::channel('mismatch-store-recon')->debug('Updating StoreID missing transaction record', [
+                'isInserted' => 1,
+                'updatedStoreID' => $dataset['storeID'],
+                'updatedRetekCode' => $dataset['retekCode'],
+                'updatedTender' => $dataset['colBank']
+            ]);
             $_data->update([
                 'isInserted' => 1,
                 "updatedStoreID" => $dataset['storeID'],
                 "updatedRetekCode" => $dataset['retekCode'],
                 "updatedTender" => $dataset['colBank']
             ]);
-            
+
+            Log::channel('mismatch-store-recon')->debug('Inserting into recon query', [
+                'storeID' => $dataset['storeID'],
+                'retekCode' => $dataset['retekCode'],
+                'colBank' => $dataset['colBank'],
+                'brand' => $_store->{'Brand Desc'},
+                'depositDate' => $_data->depositDate,
+                'depositAmount' => $_data->depositAmount,
+                'remarks' => 'Unallocated Insert'
+            ]);
             $query->insert([
                 'storeID' => $dataset['storeID'],
                 'retekCode' => $dataset['retekCode'],
@@ -444,15 +506,22 @@ class MismatchStoreRecon extends Component {
 
         } catch (\Throwable $th) {
             DB::rollBack();
+            Log::channel('mismatch-store-recon')->error('Error occurred during recon process', [
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString(),
+                'dataset' => $dataset
+            ]);
             $this->emit('unallocated:failed', $th->getMessage());
             return false;
         }
 
         DB::commit();
+        Log::channel('mismatch-store-recon')->info('Successfully completed recon process');
+        Log::channel('mismatch-store-recon')->info('Recon - Single item update completed');
+
         $this->emit('unallocated:success');
         return true;
     }
-
 
 
 

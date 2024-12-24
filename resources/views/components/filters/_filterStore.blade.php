@@ -1,58 +1,109 @@
 <script>
     var $j = jQuery.noConflict();
 
-    /**
-     * Initialize the select2 for brands
-     */
-    if (!(typeof functionName === 'initializeBanksSelect2')) {
-        function initializeBanksSelect2() {
-            var banksSelect2 = $j(this.$refs['{{ $key }}']).select2();
+    function initializeFilter(filterRef, config) {
+        const {
+            route,
+            placeholder,
+            minLength,
+            clearBtnRef,
+            wireField,
+            customLang,
+            currentTab
+        } = config;
 
-            // Initialize brands with initial data
-            updateBrands(banksSelect2);
+        const selectFilter = $j(filterRef).select2({
+            placeholder: placeholder,
+            minimumInputLength: minLength,
+            language: customLang || {},
+            ajax: {
+                url: route,
+                dataType: 'json',
+                delay: 250,
+                data: params => ({
+                    search: params.term,
+                    currentTab: currentTab
+                }),
+                processResults: data => ({
+                    results: data.results.map(item => ({
+                        id: item.id,
+                        text: item.text,
+                    }))
+                }),
+            },
+        });
 
-            banksSelect2.on("select2:select", (event) => {
-                // Set the selected brand in Livewire component
-                this.$wire['{{ $update }}'] = event.target.value;
-                this.$wire.filtering = true;
-            });
+        // Clear button logic
+        selectFilter.on('select2:select', function(event) {
+            config.onSelect(event.target.value);
+            $j(clearBtnRef).show();
+        });
 
+        $j(clearBtnRef).on('click', function() {
+            $j(filterRef).val(null).trigger('change');
+            config.onClear();
+            $j(clearBtnRef).hide();
+        }).hide();
 
-            // Livewire event listener to reset brands when triggered
-            this.$wire.on('resetAll', (event) => {
-                banksSelect2.val("").trigger("change");
-            });
-        }
+        return selectFilter;
     }
-    /**
-     * Update brands in Select2 dropdown
-     */
-    if (!(typeof functionName === 'updateBrands')) {
-        function updateBrands(select2Instance) {
-            // Clear existing options
-            select2Instance.empty();
 
-            // Initial data for brands
-            const initialBrandsData = @entangle($data);
+    function initializeFilters() {
+        const url = new URL(window.location.href);
+        const currentTab = url.searchParams.get('t');
 
-            // Append new options
-            select2Instance.append(new Option('{{ $initialValue }}', '   SSSS'));
-            select2Instance.append(new Option('ALL', '   '));
-
-            initialBrandsData.initialValue.forEach(item => {
-                select2Instance.append(new Option(item['{{ $arr }}'], item['{{ $arr }}']));
-            });
-
-            select2Instance.trigger("change");
-        }
+        // Store Filter
+        this.selectFilterStore = initializeFilter(this.$refs._store_filter, {
+            route: '{{ route('storeSearch') }}',
+            placeholder: 'SELECT A STORE',
+            minLength: 2,
+            clearBtnRef: this.$refs._clear_store,
+            wireField: '_store',
+            currentTab: currentTab,
+            onSelect: (value) => {
+                this.$wire.store = value;
+                this.filtering = true;
+            },
+            onClear: () => {
+                this.$wire.store = '';
+                this.filtering = false;
+            },
+            customLang: {
+                inputTooShort: () => 'Please enter 2 or more numbers',
+            },
+        });
     }
-
 </script>
 
-<div class="d-flex gap-2 align-items-center">
-    <div x-init="initializeBanksSelect2" wire:ignore>
-        <select x-ref="{{ $key }}" data-placeholder="{{ $initialValue }}" class="w-mob-100" style="width: 200px">
-            <option></option>
-        </select>
+<div x-data="{ _store: '' }" x-init="initializeFilters" style="display: flex; gap: 20px;">
+    <!-- Store Filter -->
+    <div wire:ignore style="position: relative; width: 200px;">
+        <select x-ref="_store_filter" class="w-mob-200" style="width: 100%; height: 40px;"></select>
+        <button x-ref="_clear_store" type="button" class="clear-btn">×</button>
     </div>
 </div>
+<style>
+    .clear-btn {
+        background: transparent;
+        color: rgb(94, 58, 58);
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        font-size: 24px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 33%;
+        right: 20px;
+        transform: translateY(-50%);
+        z-index: 1;
+        cursor: pointer;
+    }
+
+    .clear-btn:hover {
+        color: #ff0000;
+    }
+</style>

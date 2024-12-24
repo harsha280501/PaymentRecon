@@ -43,7 +43,7 @@
                                     </a>
                                 </div>
 
-                                <div class="col-lg-3 col-12">
+                                <div class="col-lg-3 col-12" style="display: none">
                                     <a class="btn btn-warning" href="{{ url('/') }}/chead/reports/franchisee-debit" style="padding: 1.4375rem 1.25rem;">Franchisee Debit
                                     </a>
                                 </div>

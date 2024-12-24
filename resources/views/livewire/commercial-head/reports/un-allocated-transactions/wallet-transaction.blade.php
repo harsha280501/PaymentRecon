@@ -89,6 +89,6 @@
     </x-selection.checkboxes>
 
     {{-- <x-app.commercial-head.reports.unallocated.import-modal :message="$message" id="import-modal" /> --}}
-    <x-app.commercial-head.reports.unallocated.import-walletmodal :message="$message" id="import-modal" name="Unallocated Card Upload" url="/chead/upload/unallocated/wallet" exampleFileLink="{{ asset('public/sample/hdfc-cash-sample.CSV') }}"/>
+    <x-app.commercial-head.reports.unallocated.import-walletmodal :message="$message" id="import-modal" name="Unallocated Wallet Upload" url="/chead/upload/unallocated/wallet" exampleFileLink="{{ asset('public/sample/hdfc-cash-sample.CSV') }}"/>
 
 </div>

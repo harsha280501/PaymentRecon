@@ -8,8 +8,7 @@ use Throwable;
 /**
  * Livewire Page with Tabs
  */
-interface BankStatementReadLogsInterface
-{
+interface BankStatementReadLogsInterface {
 
 
 

@@ -19,6 +19,7 @@ use App\Traits\WithExportDate;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\WithFileUploads;
 
 
@@ -323,23 +324,34 @@ class UpiReconciliation extends Component implements UseExcelDataset, WithHeader
 
 
 
-
     public function uploadExcelData(array $dataset) {
         try {
+            // Log the start of the process
+            Log::channel('upi-recon')->debug('Starting Excel upload recon for reconItem: ' . $dataset['reconItem'], $dataset);
 
             $_reco = \App\Models\Process\SAP\CardRecon::where('cardSalesRecoUID', '=', $dataset['reconItem'])->first();
 
-
+            // Log if no record or deposit amount found
             if (!$_reco || !$_reco->depositAmount) {
+                Log::channel('upi-recon')->warning('No reconciliation item found or depositAmount is missing.', ['reconItem' => $dataset['reconItem']]);
                 return true;
             }
 
             $calc = ($_reco->cardSale - ($_reco->depositAmount - $_reco->adjAmount));
 
+            // Log the calculated value
+            Log::channel('upi-recon')->debug('Calculated difference (cardSale - (depositAmount - adjAmount)): ' . $calc);
+
             # get the approval process records
             $records = CardReconApproval::where('cardSalesRecoUID', '=', $dataset['reconItem'])
                 ->where('approveStatus', 'Pending');
 
+            // Log if no approval records are found
+            if ($records->count() == 0) {
+                Log::channel('upi-recon')->warning('No pending approval records found for reconItem: ' . $dataset['reconItem']);
+            } else {
+                Log::channel('upi-recon')->debug('Found ' . $records->count() . ' pending approval records for reconItem: ' . $dataset['reconItem']);
+            }
 
             $records->update([
                 'approveStatus' => 'Rejected',
@@ -349,20 +361,30 @@ class UpiReconciliation extends Component implements UseExcelDataset, WithHeader
                 'cheadRemarks' => 'Uploaded by Commercial head'
             ]);
 
+            // Log the rejection of approval records
+            Log::channel('upi-recon')->debug('Approval records updated to Rejected for reconItem: ' . $dataset['reconItem'], [
+                'updatedRecords' => $records->get()->toArray()
+            ]);
 
-            # update the item as
+            # update the item
             $_reco->update([
                 'adjAmount' => -1 * $_reco->depositAmount,
                 'status' => ($calc <= -100 && $calc >= 100) ? 'Matched' : 'Not Matched',
-                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Compeleted' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
+                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Completed' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
                 'diffSaleDeposit' => $calc,
                 'storeUpdateRemarks' => 'Updated Store ID - ' . $_reco->storeUID . ' to ' . $dataset['storeID'] .
                     ' and Sales Date - ' . $_reco->transactionDate . ' to ' . $dataset['salesDate'] .
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
 
-            # insert new item to the recon
-            \App\Models\Process\SAP\CardRecon::insert([
+            // Log the updated reconciliation record
+            Log::channel('upi-recon')->debug('Reconciliation item updated.', [
+                'reconItem' => $dataset['reconItem'],
+                'newData' => $_reco->getChanges()
+            ]);
+
+            # insert new item
+            $newItem = \App\Models\Process\SAP\CardRecon::create([
                 'transactionDate' => Carbon::parse($dataset['salesDate'])->format('Y-m-d'),
                 'depositDt' => $_reco->depositDt,
                 'collectionBank' => $dataset['colBank'],
@@ -375,6 +397,10 @@ class UpiReconciliation extends Component implements UseExcelDataset, WithHeader
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
 
+            // Log the insertion of the new item
+            Log::channel('upi-recon')->debug('Inserted new reconciliation item for reconItem: ' . $dataset['reconItem'], [
+                'insertedItem' => $newItem
+            ]);
 
             # Update the Reconciliation Data
             DB::statement('sp_UpdateCardReconcilation :storeID, :saleDate, :depositDate, :bank, :recoID', [
@@ -385,8 +411,23 @@ class UpiReconciliation extends Component implements UseExcelDataset, WithHeader
                 'recoID' => $dataset['reconItem']
             ]);
 
-        } catch (\Throwable $th) {
+            // Log the completion of the update
+            Log::channel('upi-recon')->debug('Card reconciliation data updated successfully.', [
+                'reconItem' => $dataset['reconItem'],
+                'storeID' => $dataset['storeID'],
+                'salesDate' => $dataset['salesDate'],
+                'depositDate' => $_reco->depositDt,
+                'bank' => $dataset['colBank']
+            ]);
 
+        } catch (\Throwable $th) {
+            // Log the error message with detailed context
+            Log::channel('upi-recon')->error('Error during Excel upload recon: ' . $th->getMessage(), [
+                'reconItem' => $dataset['reconItem'],
+                'exception' => $th
+            ]);
+
+            // Dump the error message for immediate debugging if needed
             dd($th->getMessage());
             return false;
         }
@@ -397,27 +438,43 @@ class UpiReconciliation extends Component implements UseExcelDataset, WithHeader
 
 
 
-
     /**
-     * Upate a recon item
+     * Update a recon item
      * @param array $dataset
      * @return bool
      */
     public function recon(array $dataset) {
-
         try {
             DB::beginTransaction();
 
+            // Log the start of the process
+            Log::channel('upi-recon')->debug('Starting recon update for reconItem: ' . $dataset['reconItem'], $dataset);
+
             $_reco = \App\Models\Process\SAP\CardRecon::where('cardSalesRecoUID', '=', $dataset['reconItem'])->first();
+
+            // Log if no record is found
+            if (!$_reco) {
+                Log::channel('upi-recon')->warning('No reconciliation item found for reconItem: ' . $dataset['reconItem']);
+                return false;
+            }
 
             $calc = $_reco->cardSale - ($_reco->depositAmount - $_reco->adjAmount);
 
-            # get the approval process records
+            // Log the calculated value
+            Log::channel('upi-recon')->debug('Calculated difference (cardSale - (depositAmount - adjAmount)): ' . $calc);
+
+            // Get the approval process records
             $records = CardReconApproval::where('cardSalesRecoUID', '=', $dataset['reconItem'])
                 ->where('approveStatus', 'Pending');
 
+            // Log the count of approval records found
+            if ($records->count() == 0) {
+                Log::channel('upi-recon')->warning('No pending approval records found for reconItem: ' . $dataset['reconItem']);
+            } else {
+                Log::channel('upi-recon')->debug('Found ' . $records->count() . ' pending approval records for reconItem: ' . $dataset['reconItem']);
+            }
 
-
+            // Update the approval records
             $records->update([
                 'approveStatus' => 'Rejected',
                 'approvedBy' => auth()->user()->userUID,
@@ -426,23 +483,29 @@ class UpiReconciliation extends Component implements UseExcelDataset, WithHeader
                 'cheadRemarks' => 'Uploaded by Commercial head'
             ]);
 
+            // Log the rejection of approval records
+            Log::channel('upi-recon')->debug('Approval records updated to Rejected for reconItem: ' . $dataset['reconItem'], [
+                'updatedRecords' => $records->get()->toArray()
+            ]);
 
-
-
-            # update the item as
+            // Update the item
             $_reco->update([
                 'adjAmount' => -1 * $_reco->depositAmount,
                 'status' => ($calc <= -100 && $calc >= 100) ? 'Matched' : 'Not Matched',
-                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Compeleted' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
+                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Completed' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
                 'diffSaleDeposit' => $calc,
                 'storeUpdateRemarks' => 'Updated Store ID - ' . $_reco->storeUID . ' to ' . $dataset['storeID'] .
                     ' and Sales Date - ' . $_reco->transactionDate . ' to ' . $dataset['salesDate'] .
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
 
+            // Log the updated reconciliation record
+            Log::channel('upi-recon')->debug('Reconciliation item updated.', [
+                'reconItem' => $dataset['reconItem'],
+                'newData' => $_reco->getChanges()
+            ]);
 
-
-            # insert new item to the recon
+            // Insert new item to the recon
             \App\Models\Process\SAP\CardRecon::insert([
                 'transactionDate' => Carbon::parse($dataset['salesDate'])->format('Y-m-d'),
                 'depositDt' => $_reco->depositDt,
@@ -456,8 +519,12 @@ class UpiReconciliation extends Component implements UseExcelDataset, WithHeader
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
 
+            // Log the insertion of the new item
+            Log::channel('upi-recon')->debug('Inserted new reconciliation item for reconItem: ' . $dataset['reconItem'], [
+                'dataset' => $dataset
+            ]);
 
-            # Update the Reconciliation Data
+            // Update the Reconciliation Data
             DB::statement('sp_UpdateCardReconcilation :storeID, :saleDate, :depositDate, :bank, :recoID', [
                 'storeID' => $dataset['storeID'],
                 'saleDate' => $dataset['salesDate'],
@@ -466,9 +533,22 @@ class UpiReconciliation extends Component implements UseExcelDataset, WithHeader
                 'recoID' => $dataset['reconItem']
             ]);
 
-        } catch (\Throwable $th) {
+            // Log the completion of the update
+            Log::channel('upi-recon')->debug('Card reconciliation data updated successfully for reconItem: ' . $dataset['reconItem'], [
+                'storeID' => $dataset['storeID'],
+                'salesDate' => $dataset['salesDate'],
+                'depositDate' => $_reco->depositDt,
+                'bank' => $dataset['colBank']
+            ]);
 
+        } catch (\Throwable $th) {
+            // Rollback the transaction and log the error
             DB::rollBack();
+            Log::channel('upi-recon')->error('Error during recon update: ' . $th->getMessage(), [
+                'reconItem' => $dataset['reconItem'],
+                'exception' => $th
+            ]);
+
             $this->emit('recon:failed', ['message' => $th->getMessage()]);
             return false;
         }
@@ -487,7 +567,7 @@ class UpiReconciliation extends Component implements UseExcelDataset, WithHeader
 
         $headers = $this->headers('importable');
         $data = $this->getData('importable-upi-export');
-        
+
         $filePath = public_path() . '/Payment_MIS_COMMERCIAL_HEAD_Tracker_Card_Rectfication_Entry.csv';
         $file = fopen($filePath, 'w'); # open the filePath - create if not exists
 
@@ -615,7 +695,7 @@ class UpiReconciliation extends Component implements UseExcelDataset, WithHeader
                 'startDate' => $this->startDate,
                 'endDate' => $this->endDate,
             ], perPage: $this->perPage, orderBy: $this->orderBy
-        );  
+        );
     }
 
 

@@ -9,19 +9,21 @@
 
 
 }" x-init="() => {
+
     Livewire.on('cash-deposit:success', () => {
         succesMessageConfiguration('Cash Deposit Updated Successfully')
         window.location.reload()
     })
+
     Livewire.on('file:imported', () => {
         succesMessageConfiguration('Cash Deposit Uploaded Successfully')
         window.location.reload()
     })
 
     Livewire.on('cash-deposit:failed', (message) => {
-        console.log(message)
-        errorMessageConfiguration('Error, Something went wrong!.., please try again!')
+        errorMessageConfiguration('Error, Something went wrong!.., please try again!, - ' + message)
     })
+
 }">
 
     <style>
@@ -30,7 +32,7 @@
         }
 
     </style>
-    
+
     <x-app.commercial-head.reports.unallocated.tabs :filtering="$filtering" :activeTab="$activeTab" />
 
     <x-selection.checkboxes :selectionHas="$selectionHas">

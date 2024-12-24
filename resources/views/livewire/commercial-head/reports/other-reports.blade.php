@@ -63,17 +63,17 @@
                 </li> --}}
 
 
-                {{-- <li class="nav-item">
+				{{-- <li class="nav-item">
                     <a class="nav-link @if($activeTab === 'date-wise-collection') active tab-active @endif" style="font-size: .9em !important" href="{{ url('/') }}/chead/reports/others?t=date-wise-collection">
                         Datewise Collection
                     </a>
-                </li> --}}
+                </li>--}}
 
-                {{-- <!-- <li class="nav-item">
+                <!-- <li class="nav-item">
                     <a class="nav-link @if($activeTab === 'collection-difference') active tab-active @endif" style="font-size: .9em !important" href="{{ url('/') }}/chead/reports/others?t=collection-difference">
                         Collection Difference
                     </a>
-                </li> --> --}}
+                </li> -->
 
                 {{-- <li class="nav-item">
                     <a class="nav-link @if($activeTab === 'uploaded-report') active tab-active @endif" style="font-size: .9em !important" href="{{ url('/') }}/chead/reports/others?t=uploaded-report">

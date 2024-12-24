@@ -80,7 +80,6 @@ class OtherReports extends Component implements UseExcelDataset, WithHeaders {
         'overall-summary' => 'Outstanding_Summary',
         'chargeback-summary' => 'Chargeback_Summary',
         'date-wise-collection' => 'Date_wise_collection',
-        'Difference-Report' => 'Difference_Report',
     ];
 
 

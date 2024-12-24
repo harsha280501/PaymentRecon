@@ -25,21 +25,21 @@ class BankStatementReadLogs implements BankStatementReadLogsInterface {
 
     /**
      * Default values
-     * @var
+     * @var 
      */
     protected $filename = null;
 
 
     /**
      * Summary of table
-     * @var
+     * @var 
      */
     protected $table = null;
 
 
     /**
      * Assigning the bank name
-     * @var
+     * @var 
      */
     protected $bank = null;
 
@@ -191,7 +191,7 @@ class BankStatementReadLogs implements BankStatementReadLogsInterface {
         // setting the inserted count to 0
         $this->insertedRowCount = $this->startFrom + $this->skips;
 
-        // creating log
+        // creating log 
         UploadLog::create([
             'logType' => 'Initializing MIS Upload',
             'bankName' => $this->bank,
@@ -209,7 +209,7 @@ class BankStatementReadLogs implements BankStatementReadLogsInterface {
 
 
     /**
-     * Write a Log to the Database to indicate that the Upload is completed
+     * Write a Log to the Database to indicate that the Upload is completed 
      * @return boolean
      */
 
@@ -217,7 +217,7 @@ class BankStatementReadLogs implements BankStatementReadLogsInterface {
         // getting the final line
         $finalLine = $this->dataset[$this->getLastRecord()];
 
-        // creating log
+        // creating log 
         UploadLog::create([
             'logType' => 'Finalizing Mis Upload',
             'bankName' => $this->bank,
@@ -243,7 +243,7 @@ class BankStatementReadLogs implements BankStatementReadLogsInterface {
         $errorLine = $this->dataset[$this->getFailedRecord()];
         $finalLine = ($this->dataset[$this->getLastRecord()]);
 
-        // creating log
+        // creating log 
         UploadLog::create([
             'logType' => 'Failed Mis Upload',
             'bankName' => $this->bank,

@@ -47,7 +47,27 @@
 
                 @endif
 
-              
+                {{-- <div class="w-mob-100">
+                    <div wire:ignore class="w-mob-100">
+                        <select id="bankFIlter" style="width: 220px" class="custom-select select2 form-control searchField w-mob-100" data-live-search="true" data-bs-toggle="dropdown">
+
+                            <option value="" class="dropdown-item" selected>SELECT A BANK</option>
+                            <option value="" class="dropdown-item">ALL</option>
+
+                            @foreach($banks as $item)
+
+                            @php
+                            $item = (array) $item;
+                            @endphp
+
+                            @if($item['bank'] != '')
+                            <option class="dropdown-list" value="{{ $item['bank'] }}">{{ $item["bank"] }}</option>
+                            @endif
+
+                            @endforeach
+                        </select>
+                    </div>
+                </div> --}}
                 <div style="flex:1;">
                     <x-filters.months :months="$months" />
                 </div>

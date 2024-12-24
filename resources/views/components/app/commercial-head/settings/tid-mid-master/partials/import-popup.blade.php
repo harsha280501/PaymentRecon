@@ -1,5 +1,5 @@
 <div x-data="{
-    tidSelected: @entangle('activeTab'),
+    tidSelected: '',
     fileSelected: false,
     checkButtonStatus() {
         return this.tidSelected !== '' && this.fileSelected;

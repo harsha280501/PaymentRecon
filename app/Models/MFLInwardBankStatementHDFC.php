@@ -16,24 +16,24 @@ class MFLInwardBankStatementHDFC extends Model
 
 
     protected $fillable = [
-        'colBank',
-        'accountNo',
-        'depositDate',
-        'creditDate',
-        'description',
-        'remaksReferenceNo',
-        'debit',
-        'credit',
-        'transactionBr',
-        'filename',
-        'isActive',
-        'createdBy',
-        'createdDate',
-        'modifiedBy',
-        'modifiedDate',
-        'matchedStatus',
-        'reconTimestamp'
-    ];
+      'colBank',
+      'accountNo',
+      'depositDate',
+      'creditDate',
+      'description',
+      'remaksReferenceNo',      
+      'debit',
+      'credit',      
+      'transactionBr',
+      'filename',
+      'isActive',
+      'createdBy',
+      'createdDate',
+      'modifiedBy',
+      'modifiedDate',
+      'matchedStatus',
+      'reconTimestamp'
+     ];
 
     public $timestamps = false;
 

@@ -143,7 +143,6 @@ class UpiTransaction extends Component
     {
         $this->emit('resetAll');
         $this->resetExcept(['banks', 'activeTab']);
-        // $this->tidFilter();
     }
 
 
@@ -534,6 +533,7 @@ class UpiTransaction extends Component
 
             return collect($data);
         } else {
+
             $params = [
                 'procType' => $this->activeTab,
                 'bank' => $this->bank,

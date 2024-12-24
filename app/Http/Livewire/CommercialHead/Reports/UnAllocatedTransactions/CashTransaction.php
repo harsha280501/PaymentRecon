@@ -18,9 +18,9 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\MFLInwardStoreIDMissingTransactions;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File as FacadesFile;
+use Illuminate\Support\Facades\Log;
 
-class CashTransaction extends Component
-{
+class CashTransaction extends Component {
 
     use HasInfinityScroll, HasTabs, UseOrderBy, ParseMonths, WithExportDate, UseDefaults, WithFileUploads, ReadsExcel, UseMisModels;
 
@@ -152,8 +152,7 @@ class CashTransaction extends Component
      * Resets all the properties
      * @return void
      */
-    public function mount()
-    {
+    public function mount() {
         $this->_months = $this->_months()->toArray();
         $this->banks = $this->filters('cash-banks');
     }
@@ -179,8 +178,7 @@ class CashTransaction extends Component
      * Perform an action when the file is uploadeds
      * @return bool
      */
-    public function updatedImportFile()
-    {
+    public function updatedImportFile() {
 
         // message to display when the file is uploaded
         $this->message = 'File : Loading ...';
@@ -233,8 +231,7 @@ class CashTransaction extends Component
 
 
 
-    public function validateArray(array $data, int $rowNum)
-    {
+    public function validateArray(array $data, int $rowNum) {
 
         // read the file as array
         $validator = Validator::make($data, [
@@ -261,40 +258,55 @@ class CashTransaction extends Component
 
 
 
-
-
-
     /**
      * Update Unallocated Cash Transactions
      * @param array $dataset
      * @return bool
      */
-    public function updateUnAllocated(array $dataset): bool
-    {
+    public function updateUnAllocated(array $dataset): bool {
+        Log::channel('store-missing-transactions')->debug('Starting updateUnAllocated method', ['dataset' => $dataset]);
 
-
+        // Generate store ID query using the provided bank
+        Log::channel('store-missing-transactions')->debug('Generating query for store ID', ['bank' => $dataset['bank']]);
         $_storeID = $this->_generateQuery('cash', $dataset['bank']);
-        $_storeID_found =  $_storeID->find($dataset['UID']);
+        $_storeID_found = $_storeID->find($dataset['UID']);
 
-      
-
+        // Find the main transaction record
+        Log::channel('store-missing-transactions')->debug('Looking up MFLInwardStoreIDMissingTransactions', ['itemID' => $dataset['itemID']]);
         $_main = MFLInwardStoreIDMissingTransactions::find($dataset['itemID']);
 
+        // Check if the main transaction exists
         if (!$_main->exists()) {
+            Log::channel('store-missing-transactions')->warning('Unable to find the record', ['itemID' => $dataset['itemID']]);
             $this->emit('unallocated:failed', 'Unable to Find the Record');
             return false;
         }
 
-        // find the item in store master
+        // Find the brand for the store
+        Log::channel('store-missing-transactions')->debug('Fetching brand for store', ['Store ID' => $dataset['storeID']]);
         $brand = \App\Models\Store::where('Store ID', $dataset['storeID'])
-            ?->first()
+                ?->first()
             ?->{'Brand Desc'};
-
+        Log::channel('store-missing-transactions')->debug('Brand fetched', ['brand' => $brand]);
 
         DB::beginTransaction();
+        Log::channel('store-missing-transactions')->info('Transaction started for updating unallocated cash transactions');
 
         try {
-
+            // Update the main transaction record
+            Log::channel('store-missing-transactions')->info('Updating main transaction record', [
+                'itemID' => $dataset['itemID'],
+                'update_data' => [
+                    "storeID" => $dataset['storeID'],
+                    "retekCode" => $dataset['retekCode'],
+                    "salesDate" => $dataset['salesDate'],
+                    "missingRemarks" => 'Valid',
+                    "unAllocatedStatus" => 'Valid',
+                    "unAllocatedRemarks" => $dataset['remarks'],
+                    "unAllocatedCorrectionDate" => now(),
+                    'isActive' => '1'
+                ]
+            ]);
             $_main->update([
                 "storeID" => $dataset['storeID'],
                 "retekCode" => $dataset['retekCode'],
@@ -306,7 +318,20 @@ class CashTransaction extends Component
                 'isActive' => '1'
             ]);
 
-            
+            // Update the store ID record
+            Log::channel('store-missing-transactions')->info('Updating storeID record', [
+                'UID' => $dataset['UID'],
+                'update_data' => [
+                    "storeID" => $dataset['storeID'],
+                    "retekCode" => $dataset['retekCode'],
+                    "brand" => $brand,
+                    "missingRemarks" => 'Valid',
+                    "unAllocatedStatus" => 'Valid',
+                    "unAllocatedRemarks" => $dataset['remarks'],
+                    "unAllocatedCorrectionDate" => now(),
+                    'isActive' => '1'
+                ]
+            ]);
             $main = $_storeID_found->update([
                 "storeID" => $dataset['storeID'],
                 "retekCode" => $dataset['retekCode'],
@@ -318,24 +343,20 @@ class CashTransaction extends Component
                 'isActive' => '1'
             ]);
 
-            
-            
+            Log::channel('store-missing-transactions')->info('Both records updated successfully');
+
         } catch (\Throwable $th) {
             DB::rollBack();
-            dd($th->getMessage());
+            Log::channel('store-missing-transactions')->error('Error occurred during update', ['error' => $th->getMessage()]);
             $this->emit('unallocated:failed', $th->getMessage());
             return false;
         }
-        
-        
+
         DB::commit();
+        Log::channel('store-missing-transactions')->info('Transaction committed successfully');
         $this->emit('unallocated:success');
         return true;
     }
-
-
-
-
 
 
 
@@ -345,38 +366,58 @@ class CashTransaction extends Component
      * @param array $dataset
      * @return bool
      */
-    public function uploadExcelValidatedArray(array $dataset)
-    {
+    public function uploadExcelValidatedArray(array $dataset) {
+        Log::channel('store-missing-transactions')->debug('Starting uploadExcelValidatedArray method', ['dataset' => $dataset]);
 
-        // find the record
+        // Find the main transaction record
+        Log::channel('store-missing-transactions')->debug('Looking up MFLInwardStoreIDMissingTransactions', ['Unique ID' => $dataset['Unique ID']]);
         $_main = MFLInwardStoreIDMissingTransactions::find($dataset['Unique ID']);
 
+        // Generate store ID query using the collection bank
+        Log::channel('store-missing-transactions')->debug('Generating query for store ID', ['Collection Bank' => $dataset['Collection Bank']]);
         $_storeID = $this->_generateQuery('cash', $dataset['Collection Bank']);
-        $_storeID_found =  $_storeID->find($_main->UID);
-       
+        $_storeID_found = $_storeID->find($_main->UID);
+        Log::channel('store-missing-transactions')->debug('Store ID query result', ['storeID_found' => $_storeID_found]);
 
+        // Fetch the brand for the store
+        Log::channel('store-missing-transactions')->debug('Fetching brand for store', ['Store ID' => $dataset['Store ID']]);
         $brand = \App\Models\Store::where('Store ID', $dataset['Store ID'])
-            ?->first()
+                ?->first()
             ?->{'Brand Desc'};
+        Log::channel('store-missing-transactions')->debug('Brand fetched', ['brand' => $brand]);
 
-        // checking if the data exists
+        // Check if the main transaction exists
         if (!$_main->exists()) {
+            Log::channel('store-missing-transactions')->warning('Data loss risk - Updating Unique ID will cause data loss', ['Unique ID' => $dataset['Unique ID']]);
             $this->message = 'File: Not Allowed - Updating the Unique ID will result in a potential data loss, this incident will be reported :)';
             return false;
         }
 
-        // check if the store id is not null
+        // Check if storeID is already present
         if ($_main->replicate()->storeID != null) {
-            $this->message = 'File: Not Allowed - Updating theStore ID when its not empty is not allowed, this incident will be reported :)';
+            Log::channel('store-missing-transactions')->warning('Store ID update attempt when storeID is not null', ['storeID' => $_main->storeID]);
+            $this->message = 'File: Not Allowed - Updating the Store ID when it is not empty is not allowed, this incident will be reported :)';
             return false;
         }
 
-
-        // if not null then update the item using the unique id field
+        // Update the main transaction record
+        Log::channel('store-missing-transactions')->info('Updating main transaction record', [
+            'Unique ID' => $dataset['Unique ID'],
+            'update_data' => [
+                "storeID" => $dataset['Store ID'],
+                "retekCode" => $dataset['Retek Code'],
+                "salesDate" => Carbon::parse($dataset['Sales Date'])->format('Y-m-d'), // Parsing and formatting 
+                "missingRemarks" => 'Valid',
+                "unAllocatedStatus" => 'Valid',
+                "unAllocatedRemarks" => "Imported by Excel",
+                "unAllocatedCorrectionDate" => now(),
+                'isActive' => '1'
+            ]
+        ]);
         $res = $_main->update([
             "storeID" => $dataset['Store ID'],
             "retekCode" => $dataset['Retek Code'],
-           "salesDate" => Carbon::parse($dataset['Sales Date'])->format('Y-m-d'), // Parsing and formatting 
+            "salesDate" => Carbon::parse($dataset['Sales Date'])->format('Y-m-d'), // Parsing and formatting 
             "missingRemarks" => 'Valid',
             "unAllocatedStatus" => 'Valid',
             "unAllocatedRemarks" => "Imported by Excel",
@@ -384,6 +425,20 @@ class CashTransaction extends Component
             'isActive' => '1'
         ]);
 
+        // Update the store ID record
+        Log::channel('store-missing-transactions')->info('Updating storeID record', [
+            'UID' => $_main->UID,
+            'update_data' => [
+                "storeID" => $dataset['Store ID'],
+                "retekCode" => $dataset['Retek Code'],
+                "brand" => $brand,
+                "missingRemarks" => 'Valid',
+                "unAllocatedStatus" => 'Valid',
+                "unAllocatedRemarks" => "Imported by Excel",
+                "unAllocatedCorrectionDate" => now(),
+                'isActive' => '1'
+            ]
+        ]);
         $_storeID_found->update([
             "storeID" => $dataset['Store ID'],
             "retekCode" => $dataset['Retek Code'],
@@ -391,9 +446,11 @@ class CashTransaction extends Component
             "missingRemarks" => 'Valid',
             "unAllocatedStatus" => 'Valid',
             "unAllocatedRemarks" => "Imported by Excel",
-            "unAllocatedCorrectionDate" => now()->format('Y-m-d'),
+            "unAllocatedCorrectionDate" => now(),
             'isActive' => '1'
         ]);
+
+        Log::channel('store-missing-transactions')->info('Update completed successfully for both main and storeID records', ['Unique ID' => $dataset['Unique ID']]);
 
         return $res;
     }
@@ -402,8 +459,7 @@ class CashTransaction extends Component
 
 
 
-    public function headers(): array
-    {
+    public function headers(): array {
         return [
             "Unique ID",
             "Sales Date",
@@ -426,8 +482,7 @@ class CashTransaction extends Component
      * Export functionality
      * @return void
      */
-    public function export($dataset = [], $all = '')
-    {
+    public function export($dataset = [], $all = '') {
 
         $data = $this->download(!$all ? json_encode($dataset) : json_encode([]));
         $headers = $this->headers();
@@ -464,8 +519,7 @@ class CashTransaction extends Component
 
 
 
-    public function download($value = ''): \Illuminate\Support\Collection|bool
-    {
+    public function download($value = ''): \Illuminate\Support\Collection|bool {
 
         $params = [
             'procType' => 'cash-export',
@@ -486,8 +540,7 @@ class CashTransaction extends Component
 
 
 
-    public function filters()
-    {
+    public function filters() {
         return DB::select(
             'PaymentMIS_PROC_SELECT_COMMERCIALHEAD_StoreID_Missing_Transaction :procType',
             [
@@ -499,7 +552,7 @@ class CashTransaction extends Component
 
 
 
-    
+
     /**
      * Get the total Records
      *
@@ -524,7 +577,7 @@ class CashTransaction extends Component
     }
 
 
-    
+
 
 
 
@@ -534,8 +587,7 @@ class CashTransaction extends Component
      * @return 
      * @return \Illuminate\Support\Collection
      */
-    public function dataset(): \Illuminate\Support\Collection
-    {
+    public function dataset(): \Illuminate\Support\Collection {
         $params = [
             'procType' => $this->activeTab,
             'bank' => $this->bank,
@@ -563,8 +615,7 @@ class CashTransaction extends Component
      * Render main content
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
-    public function render()
-    {
+    public function render() {
 
         $dataset = $this->dataset();
 

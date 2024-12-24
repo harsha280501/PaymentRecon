@@ -1,5 +1,4 @@
 @extends('layouts.commertial-head')
-@extends('layouts.commertial-head')
 
 
 @section('content')

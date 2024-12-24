@@ -1,8 +1,8 @@
 <div class="modal fade" wire:ignore x-data="{
     data: {
-        storeID: null,
-        retekCode: null,
-        colBank: null,
+        storeID: '',
+        retekCode: '',
+        colBank: '',
         id: '{{ $data->storeMissingUID }}',
 
         errors: {
@@ -33,11 +33,10 @@
             this.data.errors.storeID = 'Store ID must be 4 digits and numeric.';
         }
 
-
-        // Validate Remarks
-        if (!this.data.colBank) {
-            this.data.errors.colBank =  'Collection Bank cannot be empty.';
+        if (!['AXIS Cash', 'ICICI Cash', 'HDFC', 'SBICASHMumbai', 'SBICASHMIS', 'IDFC', 'HDFC Card', 'ICICI Card', 'SBI Card', 'AMEX Card', 'HDFC UPI', 'WALLET PAYTM', 'WALLET PHONEPAY'].includes(this.data.colBank)) {
+            this.data.errors.colBank =  'Collection Bank is invalid.';
         }
+
 
         if(this.data.errors.storeID != null || this.data.errors.colBank != null) {
             return false;
@@ -206,8 +205,8 @@
                                             <option style="padding: 0.5em 1em;" value="SBI Card" class="form-item">
                                                 SBI Card
                                             </option>
-                                            <option style="padding: 0.5em 1em;" value="Amex Card" class="form-item">
-                                                Amex
+                                            <option style="padding: 0.5em 1em;" value="AMEX Card" class="form-item">
+                                                AMEX
                                                 Card</option>
                                             <option style="padding: 0.5em 1em;" value="HDFC UPI" class="form-item">
                                                 HDFC UPI</option>

@@ -18,13 +18,14 @@ use App\Traits\WithExportDate;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\WithFileUploads;
 
 class CardReconciliation extends Component implements UseExcelDataset, WithHeaders {
 
     use HasInfinityScroll, HasTabs, WithExportDate, ParseMonths, UseOrderBy, UseSyncFilters, UseDefaults, WithFileUploads, UseHelpers;
 
- 
+
 
 
 
@@ -327,20 +328,23 @@ class CardReconciliation extends Component implements UseExcelDataset, WithHeade
 
     public function uploadExcelData(array $dataset) {
         try {
+            // Initialize the logger with a specific channel and verbosity level
+            $logger = Log::channel('card-recon');
+            $logger->debug('Starting uploadExcelData', ['dataset' => $dataset]);
 
             $_reco = \App\Models\Process\SAP\CardRecon::where('cardSalesRecoUID', '=', $dataset['reconItem'])->first();
 
-
             if (!$_reco || !$_reco->depositAmount) {
+                $logger->info('No record found or depositAmount is missing.');
                 return true;
             }
 
             $calc = ($_reco->cardSale - ($_reco->depositAmount - $_reco->adjAmount));
+            $logger->debug('Calculation done', ['calc' => $calc]);
 
-            # get the approval process records
+            # Get the approval process records
             $records = CardReconApproval::where('cardSalesRecoUID', '=', $dataset['reconItem'])
                 ->where('approveStatus', 'Pending');
-
 
             $records->update([
                 'approveStatus' => 'Rejected',
@@ -349,20 +353,21 @@ class CardReconciliation extends Component implements UseExcelDataset, WithHeade
                 'modifiedDate' => now(),
                 'cheadRemarks' => 'Uploaded by Commercial head'
             ]);
+            $logger->info('Approval records updated.', ['reconItem' => $dataset['reconItem']]);
 
-
-            # update the item as
+            # Update the item
             $_reco->update([
                 'adjAmount' => -1 * $_reco->depositAmount,
                 'status' => ($calc <= -100 && $calc >= 100) ? 'Matched' : 'Not Matched',
-                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Compeleted' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
+                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Completed' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
                 'diffSaleDeposit' => $calc,
                 'storeUpdateRemarks' => 'Updated Store ID - ' . $_reco->storeUID . ' to ' . $dataset['storeID'] .
                     ' and Sales Date - ' . $_reco->transactionDate . ' to ' . $dataset['salesDate'] .
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
+            $logger->info('Recon item updated.', ['reconItem' => $dataset['reconItem']]);
 
-            # insert new item to the recon
+            # Insert new item to the recon
             \App\Models\Process\SAP\CardRecon::insert([
                 'transactionDate' => Carbon::parse($dataset['salesDate'])->format('Y-m-d'),
                 'depositDt' => $_reco->depositDt,
@@ -375,7 +380,7 @@ class CardReconciliation extends Component implements UseExcelDataset, WithHeade
                     ' and Sales Date - ' . $_reco->transactionDate . ' to ' . $dataset['salesDate'] .
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
-
+            $logger->info('New item inserted to recon.', ['dataset' => $dataset]);
 
             # Update the Reconciliation Data
             DB::statement('sp_UpdateCardReconcilation :storeID, :saleDate, :depositDate, :bank, :recoID', [
@@ -385,13 +390,14 @@ class CardReconciliation extends Component implements UseExcelDataset, WithHeade
                 'bank' => $dataset['colBank'],
                 'recoID' => $dataset['reconItem']
             ]);
+            $logger->info('Reconciliation data updated.', ['dataset' => $dataset]);
 
         } catch (\Throwable $th) {
-
-            dd($th->getMessage());
+            $logger->error('Error in uploadExcelData', ['error' => $th->getMessage()]);
             return false;
         }
 
+        $logger->debug('uploadExcelData completed successfully.');
         return true;
     }
 
@@ -399,27 +405,32 @@ class CardReconciliation extends Component implements UseExcelDataset, WithHeade
 
 
 
-    /**
-     * Upate a recon item
-     * @param array $dataset
-     * @return bool
-     */
     public function recon(array $dataset) {
+        // Initialize logger for the 'card-recon' channel
+        $logger = Log::channel('card-recon');
+        $logger->debug('Recon process started', ['dataset' => $dataset]);
 
         try {
             DB::beginTransaction();
 
+            $logger->debug('Fetching recon item', ['cardSalesRecoUID' => $dataset['reconItem']]);
             $_reco = \App\Models\Process\SAP\CardRecon::where('cardSalesRecoUID', '=', $dataset['reconItem'])->first();
 
-            $calc = $_reco->cardSale - ($_reco->depositAmount - $_reco->adjAmount);
+            if (!$_reco) {
+                $logger->warning('Recon item not found', ['cardSalesRecoUID' => $dataset['reconItem']]);
+                DB::rollBack();
+                return false;
+            }
 
-            # get the approval process records
+            $calc = $_reco->cardSale - ($_reco->depositAmount - $_reco->adjAmount);
+            $logger->debug('Calculation completed', ['calc' => $calc]);
+
+            # Get the approval process records
+            $logger->debug('Fetching approval process records');
             $records = CardReconApproval::where('cardSalesRecoUID', '=', $dataset['reconItem'])
                 ->where('approveStatus', 'Pending');
 
-
-
-            $records->update([
+            $recordsUpdated = $records->update([
                 'approveStatus' => 'Rejected',
                 'approvedBy' => auth()->user()->userUID,
                 'approvalDate' => now(),
@@ -427,23 +438,22 @@ class CardReconciliation extends Component implements UseExcelDataset, WithHeade
                 'cheadRemarks' => 'Uploaded by Commercial head'
             ]);
 
+            $logger->info('Approval process records updated', ['recordsUpdated' => $recordsUpdated]);
 
-
-
-            # update the item as
+            # Update the item
             $_reco->update([
                 'adjAmount' => -1 * $_reco->depositAmount,
                 'status' => ($calc <= -100 && $calc >= 100) ? 'Matched' : 'Not Matched',
-                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Compeleted' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
+                'reconStatus' => ($calc <= -100 && $calc >= 100) ? 'Completed' : ($_reco->reconStatus == 'Pending for Approval' ? 'Rejected' : 'Pending'),
                 'diffSaleDeposit' => $calc,
                 'storeUpdateRemarks' => 'Updated Store ID - ' . $_reco->storeUID . ' to ' . $dataset['storeID'] .
                     ' and Sales Date - ' . $_reco->transactionDate . ' to ' . $dataset['salesDate'] .
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
 
+            $logger->info('Recon item updated', ['reconItem' => $dataset['reconItem']]);
 
-
-            # insert new item to the recon
+            # Insert new item into recon
             \App\Models\Process\SAP\CardRecon::insert([
                 'transactionDate' => Carbon::parse($dataset['salesDate'])->format('Y-m-d'),
                 'depositDt' => $_reco->depositDt,
@@ -457,8 +467,9 @@ class CardReconciliation extends Component implements UseExcelDataset, WithHeade
                     ' and Collection Bank - ' . $_reco->collectionBank . ' to ' . $dataset['colBank']
             ]);
 
+            $logger->info('New recon item inserted', ['storeID' => $dataset['storeID']]);
 
-            # Update the Reconciliation Data
+            # Update the Reconciliation Data via stored procedure
             DB::statement('sp_UpdateCardReconcilation :storeID, :saleDate, :depositDate, :bank, :recoID', [
                 'storeID' => $dataset['storeID'],
                 'saleDate' => $dataset['salesDate'],
@@ -467,14 +478,17 @@ class CardReconciliation extends Component implements UseExcelDataset, WithHeade
                 'recoID' => $dataset['reconItem']
             ]);
 
-        } catch (\Throwable $th) {
+            $logger->info('Reconciliation data updated via stored procedure', ['storeID' => $dataset['storeID'], 'recoID' => $dataset['reconItem']]);
 
+        } catch (\Throwable $th) {
+            $logger->error('Recon process failed', ['error' => $th->getMessage()]);
             DB::rollBack();
             $this->emit('recon:failed', ['message' => $th->getMessage()]);
             return false;
         }
 
         DB::commit();
+        $logger->debug('Recon process completed successfully.');
         $this->emit('recon:updated');
         return true;
     }
@@ -488,7 +502,7 @@ class CardReconciliation extends Component implements UseExcelDataset, WithHeade
 
         $headers = $this->headers('importable');
         $data = $this->getData('importable-card-export');
-        
+
         $filePath = public_path() . '/Payment_MIS_COMMERCIAL_HEAD_Tracker_Card_Rectfication_Entry.csv';
         $file = fopen($filePath, 'w'); # open the filePath - create if not exists
 

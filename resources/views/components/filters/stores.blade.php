@@ -20,7 +20,7 @@
 </script>
 
 <div x-init="_storeMain" wire:ignore>
-    <select x-ref="stores" data-placeholder="SELECT STOREqwqwq ID" class="w-mob-100" style="width: 200px">
+    <select x-ref="stores" data-placeholder="SELECT STORE ID" class="w-mob-100" style="width: 200px">
 
         <option></option>
         <option value=" ">All</option>

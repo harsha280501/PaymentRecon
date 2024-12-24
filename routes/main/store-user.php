@@ -98,6 +98,8 @@ Route::middleware(['auth', 'store-user', 'forceUpdatePassword'])->prefix('suser'
         Route::get('upi-recon', 'upiReconcil');
         Route::get('all-card-recon', 'allCardReconNew');
         Route::get('all-card-recon-old', 'allCardRecon');
+        Route::get('outstanding-summary', 'OutstandingSummary');
+        Route::get('opening-balance-adjuments', 'OpeningBalanceAdjuments');
     });
 
 

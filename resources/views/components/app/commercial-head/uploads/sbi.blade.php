@@ -1,4 +1,4 @@
-<div class="col-lg-10 col-12">
+<div class="col-lg-12 col-12">
     <div class="entry-box1 p-3" style="height: fit-content">
         <h2>SBI</h2>
         <div class="row">
@@ -15,12 +15,12 @@
                 <button data-bs-toggle="modal" data-bs-target="#sbiCardUploadModal" class="btn btn-sbi">
                     <i class="fa fa-plus mb-1" aria-hidden="true"></i><br>Card</button>
             </div>
-            {{-- <div class="col-lg col-6">
+            <div class="col-lg col-6">
                 <button data-bs-toggle="modal" class="btn btn-sbi" data-bs-target="#sbiBoxUploadModal"><i class="fa fa-plus mb-1" aria-hidden="true"></i><br>Agency</button>
             </div>
             <div class="col-lg col-6">
                 <button data-bs-toggle="modal" class="btn btn-sbi" data-bs-target="#sbiBoxMumbaiUploadModal"><i class="fa fa-plus mb-1" aria-hidden="true"></i><br>Mumbai</button>
-            </div> --}}
+            </div>
             <div class="col-lg col-6">
                 <button data-bs-toggle="modal" class="btn btn-sbi" data-bs-target="#sbiHCM"><i class="fa fa-plus mb-1" aria-hidden="true"></i><br>HCM</button>
             </div>
