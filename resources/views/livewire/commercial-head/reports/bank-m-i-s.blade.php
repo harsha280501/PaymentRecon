@@ -141,7 +141,7 @@
                 </div> --}}
 
                 <div class="mt-2 w-mob-100" wire:ignore.self>
-                    <x-filters._filterStore :activetab="$activeTab" data="stores" arr="store" key="SGVsbG9rbmRrbmNkYw"
+                    <x-filters._filterStore :activetab="$activeTab" :route="$searchRoute" data="stores" arr="store" key="SGVsbG9rbmRrbmNkYw"
                         update="store" initialValue="SELECT A STORE" />
                 </div>
 

@@ -123,6 +123,8 @@ class BankMIS extends Component implements UseExcelDataset, WithHeaders
     public $wallet_banks = [];
     // public $selectedTid = '';
     // protected $listeners = ['updateTid' => 'setSelectedTid'];
+    public $searchRoute = "reports.bankMIS.searchStore";
+
     /**
      * Switch Tab 2 main
      * @return void
@@ -134,6 +136,7 @@ class BankMIS extends Component implements UseExcelDataset, WithHeaders
         $this->card_banks = $this->banks('all-card-mis');
         // $this->upi_banks = $this->banks('all-upi-mis');
         $this->wallet_banks = $this->banks('all-wallet-mis');
+        $this->searchRoute;
     }
 
     // public function setSelectedTid($selectedTid)

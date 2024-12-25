@@ -11,40 +11,20 @@
         <div class="d-flex align-items-center gap-2 d-flex-mob">
 
             <div style="display:@if ($filtering) unset @else none @endif" class="">
-                <button @click="() => {
+                <button
+                    @click="() => {
                 $wire.back()
                 reset()
+                window.location.reload()
             }"
                     style="background: transparent; outline: none; border: none; align-self: center; font-size: 1.3em; margin-top: 0em; padding: .2em .6em">
                     <i class="fa-solid fa-arrow-left"></i>
                 </button>
             </div>
 
-
-
             <div class="w-mob-100">
-                <div wire:ignore class="w-mob-100">
-                    <select id="outstanding_storeFilter" style="width: 220px"
-                        class="custom-select select2 form-control searchField w-mob-100" data-live-search="true"
-                        data-bs-toggle="dropdown">
-
-                        <option value="" class="dropdown-item" selected>SELECT STORE ID</option>
-                        <option value="" class="dropdown-item">ALL</option>
-
-                        @foreach ($stores as $item)
-                            @php
-                                $item = (array) $item;
-                            @endphp
-
-                            @if ($item['storeID'] != '')
-                                <option class="dropdown-list" value="{{ $item['storeID'] }}">{{ $item['storeID'] }}
-                                </option>
-                            @endif
-                        @endforeach
-                    </select>
-                </div>
+                <x-filters._filterStore :route="$searchRoute" :update="'store'" />
             </div>
-
 
             <div class="w-mob-100" style="margin-top: 7px">
                 <div>

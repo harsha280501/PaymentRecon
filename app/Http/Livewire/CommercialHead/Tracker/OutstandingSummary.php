@@ -13,13 +13,14 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Illuminate\Http\Request;
 
 class OutstandingSummary extends Component
 {
 
     use HasInfinityScroll, HasTabs, ParseMonths, UseDefaults, UseHelpers, UseOrderBy;
-    public $stores = [];
     public $store = '';
+    public $searchRoute = "tracker.outstanding-summary.searchStore";
     /**
      * Filename for Excel Export
      * @var string
@@ -32,7 +33,7 @@ class OutstandingSummary extends Component
     public function mount()
     {
         $this->_months = $this->_months()->toArray();
-        $this->stores = $this->filters('stores') ?? [];
+        $this->searchRoute;
     }
 
     /**
@@ -102,6 +103,43 @@ class OutstandingSummary extends Component
             perPage: $this->perPage,
             orderBy: $this->orderBy
         );
+    }
+    public function searchStore(Request $request)
+    {
+        $searchTerm = $request->input('search');
+        $params = [
+            'procType' => 'stores',
+            'store' => $this->store,
+            'from' => $this->startDate,
+            'to' => $this->endDate,
+            'PageSize' => $this->perPage,
+            'orderBy' => $this->orderBy,
+            'search' => $searchTerm ?? null,
+        ];
+        $stores = collect(DB::select(
+            'EXEC PaymentMIS_PROC_SELECT_COMMERCIALHEAD_Tracker_OutStanding_Summary
+                        @procType = :procType,
+                        @store = :store,
+                        @from = :from,
+                        @to = :to,
+                        @PageSize = :PageSize,
+                        @OrderBy = :orderBy,
+                        @search = :search',
+            $params
+        ));
+        logger(json_encode($params));
+        logger(json_encode($stores));
+        $formattedStores = $stores->map(function ($store) {
+            return [
+                'id' => $store->storeID,
+                'text' => $store->storeID,
+            ];
+        });
+
+        return response()->json([
+            'results' => $formattedStores
+        ]);
+
     }
 
     /**

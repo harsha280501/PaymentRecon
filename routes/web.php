@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Livewire\Auth\Login;
+use App\Http\Livewire\CommercialHead\Tracker\OutstandingSummary;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
@@ -96,4 +97,5 @@ Route::get('/recon-search/{type}', function ($type) {
 })->name('reconSearch');
 
 Route::get('/search-tid', [BankMIS::class, 'searchTid'])->name('tidSearch');
-Route::get('/search-store', [BankMIS::class, 'searchStore'])->name('storeSearch');
+Route::get('/search-store-bankMIS', [BankMIS::class, 'searchStore'])->name('reports.bankMIS.searchStore');
+Route::get('/search-store-OutstandingSummary', [OutstandingSummary::class, 'searchStore'])->name('tracker.outstanding-summary.searchStore');

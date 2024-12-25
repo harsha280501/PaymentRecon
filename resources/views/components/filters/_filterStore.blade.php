@@ -54,7 +54,7 @@
 
         // Store Filter
         this.selectFilterStore = initializeFilter(this.$refs._store_filter, {
-            route: '{{ route('storeSearch') }}',
+            route: '{{ route($route) }}',
             placeholder: 'SELECT A STORE',
             minLength: 2,
             clearBtnRef: this.$refs._clear_store,
