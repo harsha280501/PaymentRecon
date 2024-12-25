@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <div style="display: block;text-align: center;">
+    <div style="display: block;text-align: center;" class="d-none">
         <p style="font-size: 1.2em; color: #000; font-weight: 700;">Balance as on
             <span style="color: green;">
                 {{ !$startDate ? now()->format('d-m-Y') : Carbon\Carbon::parse($startDate)->format('d-m-Y') }}
@@ -37,13 +37,22 @@
         <x-scrollable.scrollable :dataset="$datas">
             <x-scrollable.scroll-head>
                 <tr>
-                    <th>Date</th>
+                    <th class="left first-col sticky-col bggrey">
+                        <div class="d-flex align-items-center gap-2">
+                            <span>Date</span>
+                            <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy('')"
+                                class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i>
+                        </div>
+                    </th>
                     <th style="text-align: right !important">Opening Balance</th>
                     <th style=" text-align: right !important">Sales</th>
                     <th style="text-align: right !important">Collection</th>
                     <th style="text-align: right !important">Store Response</th>
+                    <th style="text-align: right !important">Opening Balance Adjustments
+                        <small> <br>[Cash + Card + UPI + Wallet]</small>
+                    </th>
                     <th style="text-align: right !important">Closing Balance
-                        <br>[OpenBal+Sales-Collection-StoreResponse]
+                        <small> <br>[(OpenBalance + Sales) - (Collection - StoreResponse)]</small>
                     </th>
                 </tr>
             </x-scrollable.scroll-head>
@@ -51,7 +60,7 @@
 
                 @foreach ($datas as $data)
                     <tr>
-                        <td class="left">{{ \Carbon\Carbon::parse($data->Date)->format('d-m-Y') }}</td>
+                        <td class="left">{{ \Carbon\Carbon::parse($data->creditDate)->format('d-m-Y') }}</td>
                         <td class="right" style="background: rgba(0, 0, 0, 0.034); text-align: right !important">
                             {{ $data->OP_TOTAL }}</td>
                         <td class="right" style="background: rgba(0, 0, 0, 0.034); text-align: right !important">
@@ -60,6 +69,8 @@
                             {{ $data->COLL_TOTAL }}</td>
                         <td class="right" style="background: rgba(0, 0, 0, 0.034); text-align: right !important">
                             {{ $data->adjustmentTotal }}</td>
+                        <td class="right" style="background: rgba(0, 0, 0, 0.034); text-align: right !important">
+                            {{ number_format($data->openingBalanceAdjustment, 2) }}</td>
                         <td class="right" style="background: rgba(0, 0, 0, 0.034); text-align: right !important">
                             {{ $data->CL_TOTAL }} </td>
                     </tr>

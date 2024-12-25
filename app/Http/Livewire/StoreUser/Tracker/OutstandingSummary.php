@@ -2,19 +2,13 @@
 
 namespace App\Http\Livewire\StoreUser\Tracker;
 
-use App\Interface\Excel\UseExcelDataset;
-use App\Interface\Excel\WithFormatting;
-use App\Interface\Excel\WithHeaders;
 use App\Traits\HasTabs;
 use Livewire\Component;
 use App\Traits\HasInfinityScroll;
 use App\Traits\ParseMonths;
-use App\Traits\StreamSimpleCSV;
 use App\Traits\UseDefaults;
 use App\Traits\UseHelpers;
 use App\Traits\UseOrderBy;
-use App\Traits\UseSyncFilters;
-use App\Traits\WithExportDate;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -22,35 +16,15 @@ use Illuminate\View\View;
 
 class OutstandingSummary extends Component
 {
-    use HasInfinityScroll, HasTabs, ParseMonths, UseDefaults, UseHelpers;
-    public $stores = [];
-    public $store;
+    use HasInfinityScroll, HasTabs, ParseMonths, UseDefaults, UseHelpers, UseOrderBy;
     public $startDate = null;
     public $endDate = null;
-    /**
-     * Undocumented variable
-     *
-     * @var string
-     */
-    public $orderBy = 'desc';
-    /**
-     * Filename for Excel Export
-     * @var string
-     */
     public $export_file_name = 'Payment_MIS_COMMERCIAL_HEAD_Tracker_OutStanding_Summary';
-    /**
-     * Init
-     * @return void
-     */
+
     public function mount()
     {
         $this->_months = $this->_months()->toArray();
-        $this->stores = $this->filters('stores');
     }
-    /**
-     * Headers for excel export
-     * @return array
-     */
 
     public function headers(): array
     {
@@ -72,80 +46,33 @@ class OutstandingSummary extends Component
         fputcsv($file, ['']);
     }
 
-    /**
-     * Filters
-     * @return void
-     */
-    public function filters(string $type)
-    {
-        if (auth()->user()->roleUID == 5) {
-            return null;
-        }
-
-        $params = [
-            'procType' => $type,
-            'store' => auth()->user()->storeUID,
-            'from' => $this->startDate,
-            'to' => $this->endDate,
-        ];
-
-        return DB::withOrderBySelect(
-            'PaymentMIS_PROC_SELECT_STOREUSER_Tracker_OutStanding_Summary :procType, :store, :from, :to',
-            $params,
-            perPage: $this->perPage,
-            orderBy: $this->orderBy
-        );
-    }
-
-    /**
-     * Download dataset for excel
-     * @param string $value
-     * @return Collection|boolean
-     */
     public function download(string $value = ''): Collection|bool
     {
-
-        $params = [
-            'procType' => 'export',
-            'store' => auth()->user()->storeUID,
-            'from' => $this->startDate,
-            'to' => $this->endDate,
-        ];
-
-        return DB::withOrderBySelect(
-            'PaymentMIS_PROC_SELECT_STOREUSER_Tracker_OutStanding_Summary :procType, :store, :from, :to',
-            $params,
-            perPage: $this->perPage,
-            orderBy: $this->orderBy
-        );
+        return $this->fetchData('export');
     }
 
-    /**
-     * Data source
-     * @return array
-     */
     public function getData()
     {
-
+        return $this->fetchData('main');
+    }
+    private function fetchData(string $procType)
+    {
         $params = [
-            'procType' => 'main',
+            'procType' => $procType,
             'store' => auth()->user()->storeUID,
             'from' => $this->startDate,
             'to' => $this->endDate,
         ];
-        logger(json_encode($params));
-        return DB::withOrderBySelect(
+
+        $outstandingSummary = DB::withOrderBySelect(
             'PaymentMIS_PROC_SELECT_STOREUSER_Tracker_OutStanding_Summary :procType, :store, :from, :to',
             $params,
             perPage: $this->perPage,
             orderBy: $this->orderBy
         );
+        return $outstandingSummary ?? [];
     }
 
-    /**
-     * Render the view
-     * @return View
-     */
     public function render(): View
     {
         return view('livewire.store-user.tracker.outstanding-summary', [

@@ -98,7 +98,7 @@ class TrackerController extends Controller
     // OpeningBalanceAdjuments
     public function OpeningBalanceAdjuments()
     {
-        return view('app.storeUser.tracker.outstanding-summary', [
+        return view('app.storeUser.tracker.opening-balance-adjustments', [
             'menus' => (new GeneralService)->menus(),
             'tabs' => (new GeneralService)->tabs(),
             'brandAndStore' => (new GeneralService)->brandAndStore(),
