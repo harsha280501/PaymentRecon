@@ -27,6 +27,16 @@
             });
             this.end = null;
         }
+
+        // Check if end date is earlier than start date
+        if (this.start && this.end && this.end < this.start) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Date Range',
+                text: 'End date cannot be earlier than the start date.',
+            });
+            this.end = null;
+        }
     }
 }" x-init="Livewire.on('resets:dates', () => resetDates())">
 

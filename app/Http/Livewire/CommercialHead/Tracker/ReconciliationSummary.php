@@ -14,7 +14,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Interface\Excel\WithFormatting;
 use App\Interface\Excel\UseExcelDataset;
 
-class ReconciliationSummary extends Component implements UseExcelDataset, WithFormatting {
+class ReconciliationSummary extends Component implements UseExcelDataset, WithFormatting
+{
 
     use HasInfinityScroll, WithExportDate, ParseMonths, UseOrderBy, StreamExcelDownload;
 
@@ -70,7 +71,8 @@ class ReconciliationSummary extends Component implements UseExcelDataset, WithFo
 
 
 
-    public function mount() {
+    public function mount()
+    {
 
 
         $this->_months = $this->_months()->toArray();
@@ -93,7 +95,8 @@ class ReconciliationSummary extends Component implements UseExcelDataset, WithFo
         );
     }
 
-    public function headers(): array {
+    public function headers(): array
+    {
         return [
             "Store ID",
             "Retek Code",
@@ -123,7 +126,8 @@ class ReconciliationSummary extends Component implements UseExcelDataset, WithFo
     }
 
 
-    public function render() {
+    public function render()
+    {
 
         $this->datas = $this->datas();
 
@@ -141,7 +145,8 @@ class ReconciliationSummary extends Component implements UseExcelDataset, WithFo
     /**
      *Filters
      */
-    public function filterDate($request) {
+    public function filterDate($request)
+    {
         $this->startDate = $request['start'];
         $this->endDate = $request['end'];
         $this->filtering = true;
@@ -156,7 +161,8 @@ class ReconciliationSummary extends Component implements UseExcelDataset, WithFo
      * Resets all the properties
      * @return void
      */
-    public function back() {
+    public function back()
+    {
         $this->resetExcept('activeTab');
         $this->emit('reset:all');
         $this->emit('resetAll');
@@ -166,7 +172,8 @@ class ReconciliationSummary extends Component implements UseExcelDataset, WithFo
 
 
 
-    public function download(string $value): Collection|bool {
+    public function download(string $value): Collection|bool
+    {
 
         $params = [
             'procType' => 'export',
@@ -183,7 +190,8 @@ class ReconciliationSummary extends Component implements UseExcelDataset, WithFo
         );
     }
 
-    public function formatter(\App\Interface\Excel\SpreadSheet $worksheet, $dataset): void {
+    public function formatter(\App\Interface\Excel\SpreadSheet $worksheet, $dataset): void
+    {
 
         $worksheet->setStartFrom(2);
         $worksheet->setFilename($this->_useToday($this->export_file_name, now()->format('d-m-Y')));
@@ -242,7 +250,8 @@ class ReconciliationSummary extends Component implements UseExcelDataset, WithFo
      * Get the aMain reports
      * @return array
      */
-    public function datas() {
+    public function datas()
+    {
         return DB::withOrderBySelect(
             'PaymentMIS_PROC_COMMERCIALHEAD_SELECT_Reconciliation_Summary :procType, :storeId, :daterange, :from, :to',
             [

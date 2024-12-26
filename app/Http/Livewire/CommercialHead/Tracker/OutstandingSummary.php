@@ -17,29 +17,19 @@ use Illuminate\Http\Request;
 
 class OutstandingSummary extends Component
 {
-
     use HasInfinityScroll, HasTabs, ParseMonths, UseDefaults, UseHelpers, UseOrderBy;
     public $store = '';
     public $searchRoute = "tracker.outstanding-summary.searchStore";
-    /**
-     * Filename for Excel Export
-     * @var string
-     */
     public $export_file_name = 'Payment_MIS_COMMERCIAL_HEAD_Tracker_OutStanding_Summary';
-    /**
-     * Init
-     * @return void
-     */
+    public $startDate = null;
+    public $endDate = null;
+
     public function mount()
     {
         $this->_months = $this->_months()->toArray();
         $this->searchRoute;
     }
 
-    /**
-     * Headers for excel export
-     * @return array
-     */
     public function headers(): array
     {
         return [
@@ -56,39 +46,26 @@ class OutstandingSummary extends Component
 
     public function content($file)
     {
-        fputcsv($file, ['Balance on ' . Carbon::parse($this->startDate)->format('d-m-Y')]);
+        fputcsv($file, ['Balance on ' . Carbon::parse($this->start)->format('d-m-Y')]);
         fputcsv($file, ['']);
     }
 
-    /**
-     * Filters
-     * @return void
-     */
     public function filters(string $type)
     {
         return $this->fetchData($type);
     }
 
-    /**
-     * Download dataset for excel
-     * @param string $value
-     * @return Collection|boolean
-     */
     public function download(string $value = ''): Collection|bool
     {
-        return $this->fetchData('export', true);
+        return $this->fetchData('export');
     }
 
-    /**
-     * Data source
-     * @return array
-     */
     public function getData()
     {
-        return $this->fetchData('main', true);
+        return $this->fetchData('main');
     }
 
-    private function fetchData($procType, $needOP = false)
+    private function fetchData($procType)
     {
         $params = [
             'procType' => $procType,
@@ -96,7 +73,6 @@ class OutstandingSummary extends Component
             'from' => $this->startDate,
             'to' => $this->endDate,
         ];
-
         return DB::withOrderBySelect(
             'PaymentMIS_PROC_SELECT_COMMERCIALHEAD_Tracker_OutStanding_Summary :procType, :store, :from, :to',
             $params,
@@ -104,6 +80,7 @@ class OutstandingSummary extends Component
             orderBy: $this->orderBy
         );
     }
+
     public function searchStore(Request $request)
     {
         $searchTerm = $request->input('search');
@@ -127,8 +104,6 @@ class OutstandingSummary extends Component
                         @search = :search',
             $params
         ));
-        logger(json_encode($params));
-        logger(json_encode($stores));
         $formattedStores = $stores->map(function ($store) {
             return [
                 'id' => $store->storeID,
@@ -139,13 +114,8 @@ class OutstandingSummary extends Component
         return response()->json([
             'results' => $formattedStores
         ]);
-
     }
 
-    /**
-     * Render the view
-     * @return View
-     */
     public function render(): View
     {
         return view('livewire.commercial-head.tracker.outstanding-summary', [

@@ -262,11 +262,14 @@ class BankMIS extends Component implements UseExcelDataset, WithHeaders
 
         if ($this->activeTab === 'op-balance') {
             return [
-                'storeID',
-                'retekCode',
-                'openingBalanceDate',
-                'openingBalanceYear',
-                'totalOpBalance',
+                'Opening Balance Date',
+                'Store ID',
+                'Retek Code',
+                'Cash Opening Balance',
+                'Card Opening Balance',
+                'Upi Opening Balance',
+                'Wallet Opening Balance',
+                'Total Opening Balance',
             ];
         }
 
@@ -500,8 +503,10 @@ class BankMIS extends Component implements UseExcelDataset, WithHeaders
     public function searchStore(Request $request)
     {
         $searchTerm = $request->input('search');
+        $presentTab = $request->currentTab ?? $this->activeTab;
+        dump($presentTab, "{$presentTab}-stores");
         $params = [
-            'procType' => $request->currentTab . '-stores',
+            'procType' => "{$presentTab}-stores",
             'storeId' => $this->store,
             'bankName' => $this->bankName,
             'slipNo' => $this->slip,

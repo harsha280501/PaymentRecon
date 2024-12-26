@@ -96,7 +96,7 @@
         align-items: center;
         justify-content: center;
         position: absolute;
-        top: 33%;
+        top: 26%;
         right: 20px;
         transform: translateY(-50%);
         z-index: 1;

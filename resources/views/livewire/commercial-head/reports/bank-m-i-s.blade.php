@@ -15,10 +15,8 @@
         </div>
 
         <div class="row mb-2">
-
             <div class="col-lg-9" wire:ignore>
                 <ul class="nav nav-tabs justify-content-start" role="tablist">
-
                     <li class="nav-item"
                         wire:key="2cf24dba5fb0a30e26fngfhsccvcve83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824">
                         <a href="{{ url('/') }}/chead/reports/bankmis?t=all-cash-mis"
@@ -27,7 +25,6 @@
                             CASH MIS
                         </a>
                     </li>
-
                     <li class="nav-item"
                         wire:key="d872c4505c5202scassdsaqw32f7c0e11c369cda54fb7131e3f85462f331da0e68ec36c9b2ff">
                         <a href="{{ url('/') }}/chead/reports/bankmis?t=all-card-mis"
@@ -37,7 +34,6 @@
                             CARD MIS
                         </a>
                     </li>
-
                     <li class="nav-item"
                         wire:key="ecd26292b7f02ssssssssss970ca6909abb23e1aedd0dd57d0ee9ff40bf3f30c325e3e453a">
                         <a href="{{ url('/') }}/chead/reports/bankmis?t=all-upi-mis"
@@ -47,7 +43,6 @@
                             UPI MIS
                         </a>
                     </li>
-
                     <li class="nav-item"
                         wire:key="d7914fe546b68468sdassd8bb95f4f888a92dfc680603a75f23eb823658031fff766d9">
                         <a href="{{ url('/') }}/chead/reports/bankmis?t=all-wallet-mis"
@@ -56,12 +51,13 @@
                             WALLET MIS
                         </a>
                     </li>
-
                     <li class="nav-item"
                         wire:key="2cf24dba5fb0a30e26fngfhsccvcve83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824">
                         <a href="{{ url('/') }}/chead/reports/bankmis?t=op-balance"
                             class="nav-link @if ($activeTab === 'op-balance') active @endif"
                             wire:click="$set('activeTab', 'op-balance')">
+                            <img style="width: 30px; object-fit: cover; mix-blend-mode: multiply !important;"
+                                src="{{ asset('assets/images/balance-sheet.png') }}" />
                             OpeningBalance
                         </a>
                     </li>
@@ -71,41 +67,33 @@
 
         <div class="row" style="border-top: 2px solid lightgray;"
             wire:key="2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824">
-            <div class="my-2 d-flex d-flex-mob gap-2 align-items-center">
-                <div style="display:@if ($filtering) unset @else none @endif" class="">
-                    <button
-                        @click="() => {
-                        $wire.back()
-                        reset()
-                        window.location.reload();
-                }"
-                        style="background: transparent; outline: none; border: none; align-self: center; font-size: 1.3em; margin-top: 0em; padding: .2em .6em">
-                        <i class="fa-solid fa-arrow-left"></i>
-                    </button>
-                </div>
-
-                <div wire:ignore class="mt-1 w-mob-100"
-                    wire:key="d7914fe546b684688bb95f4f888a92dfc680603a75f23eb823658031fff766d9">
-                    <div wire:key="ecd26292b7f02970ca6909abb23e1aedd0dd57d0ee9ff40bf3f30c325e3e453a" wire:ignore.self>
-                        <template x-if="$wire.activeTab == 'all-card-mis'"
-                            wire:key="522366a1b1721036b37522f091c2fe5b9aa8011ab39da79ef5edc8a49b96bdce">
-                            <div class="select mb-1 w-mob-100" style="width: 200px" wire:ignore.self>
+            <div class="my-2 d-flex align-items-center justify-content-between" style="flex-wrap: wrap; gap: 1rem;">
+                <!-- Left-aligned elements -->
+                <div class="d-flex  gap-2" style="flex-wrap: wrap;">
+                    <!-- Back button -->
+                    <div style="display: @if ($filtering) unset @else none @endif;" class="mt-1">
+                        <button @click="() => { $wire.back(); reset(); window.location.reload(); }"
+                            style="background: transparent; outline: none; border: none; align-self: center; font-size: 1.3em; padding: 0.2em 0.6em;">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                    </div>
+                    <div class="w-mob-100">
+                        <template x-if="$wire.activeTab == 'all-card-mis'">
+                            <div class="select mt-2" style="width: 200px;">
                                 <select x-on:change="$wire.bankName = $event.target.value" id="select22-dropdown">
-                                    <option selected disabled value="" class="">SELECT BANK NAME</option>
+                                    <option selected disabled value="">SELECT BANK NAME</option>
                                     @foreach ($card_banks as $bank)
                                         @php
                                             $bank = (array) $bank;
                                         @endphp
-                                        <option value="{{ $bank['colBank'] }}" class="">{{ $bank['colBank'] }}
-                                        </option>
+                                        <option value="{{ $bank['colBank'] }}">{{ $bank['colBank'] }}</option>
                                     @endforeach
                                 </select>
                             </div>
                         </template>
-
                         <template x-if="$wire.activeTab == 'all-wallet-mis'"
                             wire:key="5111292cc76e40a363f8f0622f842c633cdbf473a4b3686222e7fd8b68fc3c04" wire:ignore>
-                            <div class="select mb-1 w-mob-100" style="width: 200px" wire:ignore.self>
+                            <div class="select mt-2 w-mob-100" style="width: 200px" wire:ignore.self>
                                 <select x-on:change="$wire.bankName = $event.target.value" id="select22-dropdown">
                                     <option selected disabled value="" class="">SELECT BANK NAME</option>
                                     @foreach ($wallet_banks as $bank)
@@ -118,43 +106,45 @@
                                 </select>
                             </div>
                         </template>
-
                         <template x-if="$wire.activeTab == 'all-cash-mis'"
                             wire:key="991f4756d8bb9de0b2e0c2f0d9463d74cd067f42d2cd8ddefb7474a0112d2406">
                             <div class="mt-2 w-mob-100">
                                 <x-filters.bank_slip :bank="$bankName" />
                             </div>
                         </template>
+                        {{-- <div class="d-flex gap-2 pt-2 align-items-center">
+                            <template x-if="$wire.activeTab == 'all-card-mis' || $wire.activeTab == 'all-upi-mis'"
+                                wire:key="tid-filter">
+                                <div x-data="{ tid: '' }" style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="position: relative; width: 200px;" wire:ignore>
+                                        <select id="tid_filter_dropdown" style="width: 100%; height: 40px;"></select>
+                                        <button id="clear_tid_btn" type="button" class="clear-btn">×</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div> --}}
+                    </div>
+                    <div class="mt-2">
+                        <x-filters._filterStore :activetab="$activeTab" :route="$searchRoute" data="stores" arr="store"
+                            key="SGVsbG9rbmRrbmNkYw" update="store" initialValue="SELECT A STORE" />
+                    </div>
+                    <div class="mt-2">
+                        <x-filters.months :months="$_months" />
+                    </div>
+                    <div class="pt-2">
+                        <x-filters.date-filter />
                     </div>
                 </div>
 
-                {{-- <div class="d-flex gap-2 pt-2 align-items-center">
-                    <template x-if="$wire.activeTab == 'all-card-mis' || $wire.activeTab == 'all-upi-mis'"
-                        wire:key="tid-filter">
-                        <div x-data="{ tid: '' }" style="display: flex; align-items: center; gap: 10px;">
-                            <div style="position: relative; width: 200px;" wire:ignore>
-                                <select id="tid_filter_dropdown" style="width: 100%; height: 40px;"></select>
-                                <button id="clear_tid_btn" type="button" class="clear-btn">×</button>
-                            </div>
-                        </div>
-                    </template>
-                </div> --}}
-
-                <div class="mt-2 w-mob-100" wire:ignore.self>
-                    <x-filters._filterStore :activetab="$activeTab" :route="$searchRoute" data="stores" arr="store" key="SGVsbG9rbmRrbmNkYw"
-                        update="store" initialValue="SELECT A STORE" />
+                <!-- Right-aligned export button -->
+                {{-- @if($active) --}}
+                <div style="margin-left: auto;">
+                    <x-filters.simple-export />
                 </div>
-
-                <div class="mt-2 w-mob-100">
-                    <x-filters.months :months="$_months" />
-                </div>
-
-                <div class="pt-2">
-                    <x-filters.date-filter />
-                </div>
-                <x-filters.simple-export />
             </div>
         </div>
+
+
         @if ($activeTab !== 'op-balance')
             <x-app.commercial-head.reports.bankmis.totals :dataset="$totals" />
         @endif
@@ -180,9 +170,7 @@
                                 <th>Slip Number</th>
                                 <th style="text-align: right !important">Deposit Amount</th>
                             </tr>
-                        @endif
-
-                        @if ($activeTab == 'all-card-mis')
+                        @elseif ($activeTab == 'all-card-mis')
                             <tr class="headers">
                                 <th class="left">
                                     <div class="d-flex align-items-center gap-2">
@@ -202,9 +190,7 @@
                                 <th style="text-align: right !important">GST</th>
                                 <th style="text-align: right !important">Net Amount</th>
                             </tr>
-                        @endif
-
-                        @if ($activeTab == 'all-upi-mis')
+                        @elseif($activeTab == 'all-upi-mis')
                             <tr class="headers">
                                 <th class="left">
                                     <div class="d-flex align-items-center gap-2">
@@ -224,9 +210,7 @@
                                 <th style="text-align: right !important">GST</th>
                                 <th style="text-align: right !important">Net Amount</th>
                             </tr>
-                        @endif
-
-                        @if ($activeTab == 'all-wallet-mis')
+                        @elseif ($activeTab == 'all-wallet-mis')
                             <tr class="headers">
                                 <th class="left">
                                     <div class="d-flex align-items-center gap-2">
@@ -246,25 +230,22 @@
                                 <th style="text-align: right !important">Net Amount</th>
                                 <th>Bank Ref / UTR No</th>
                             </tr>
-                        @endif
-
-                        @if ($activeTab == 'op-balance')
+                        @elseif ($activeTab == 'op-balance')
                             <tr class="headers">
                                 <th class="left">
                                     <div class="d-flex align-items-center gap-2">
-                                        <span>openingBalanceDate</span>
+                                        <span>Opening Balance Date</span>
                                         <i style="opacity: .5; font-size: 1.8em" wire:click="orderBy()"
                                             class="fa-solid @if ($orderBy == 'asc') fa-caret-up @else fa-caret-down @endif"></i>
                                     </div>
                                 </th>
                                 <th>Store ID</th>
                                 <th>Retek Code</th>
-                                <th>openingBalanceYear</th>
-                                <!-- <th>cashOpBalance</th>
-                                <th>cardOpBalance</th>
-                                <th>upiOpBalance</th>
-                                <th>walletOpBalance</th> -->
-                                <th>totalOpBalance</th>
+                                <th>Cash Opening Balance</th>
+                                <th>Card Opening Balance</th>
+                                <th>Upi Opening Balance</th>
+                                <th>Wallet Opening Balance</th>
+                                <th>Total Opening Balance</th>
                             </tr>
                         @endif
                     </x-scrollable.scroll-head>
@@ -289,8 +270,6 @@
                                         {{ number_format($data['depositAmount'], 2) }}</td>
                                 </tr>
                             @endforeach
-
-                            {{-- Card --}}
                         @elseif($activeTab == 'all-card-mis')
                             @foreach ($mis as $main)
                                 @php
@@ -304,7 +283,6 @@
                                     <td>{{ $data['storeID'] }}</td>
                                     <td>{{ $data['retekCode'] }}</td>
                                     <td>{{ $data['colBank'] }}</td>
-                                    {{-- <td>{{ $data['accountNo'] }}</td> --}}
                                     <td>{{ $data['merCode'] }}</td>
                                     <td>{{ $data['tid'] }}</td>
                                     <td style="text-align: right !important">
@@ -317,8 +295,6 @@
                                         {{ number_format($data['netAmount'], 2) }}</td>
                                 </tr>
                             @endforeach
-
-                            {{-- UPI --}}
                         @elseif($activeTab == 'all-upi-mis')
                             @foreach ($mis as $main)
                                 @php
@@ -332,7 +308,6 @@
                                     <td>{{ $data['storeID'] }}</td>
                                     <td>{{ $data['retekCode'] }}</td>
                                     <td>{{ $data['colBank'] }}</td>
-                                    {{-- <td>{{ $data['accountNo'] }}</td> --}}
                                     <td>{{ $data['merCode'] }}</td>
                                     <td>{{ $data['tid'] }}</td>
                                     <td style="text-align: right !important">
@@ -345,8 +320,6 @@
                                         {{ number_format($data['netAmount'], 2) }}</td>
                                 </tr>
                             @endforeach
-
-                            {{-- Wallet --}}
                         @elseif($activeTab == 'all-wallet-mis')
                             @foreach ($mis as $main)
                                 @php
@@ -382,13 +355,11 @@
                                     </td>
                                     <td>{{ $data['storeID'] }}</td>
                                     <td>{{ $data['retekCode'] }}</td>
-                                    <td>{{ $data['openingBalanceYear'] }}</td>
-                                    <!-- <td>{{ $data['cashOpBalance'] }}</td>
+                                    <td>{{ $data['cashOpBalance'] }}</td>
                                     <td>{{ $data['cardOpBalance'] }}</td>
                                     <td>{{ $data['upiOpBalance'] }}</td>
-                                    <td>{{ $data['walletOpBalance'] }}</td> -->
+                                    <td>{{ $data['walletOpBalance'] }}</td>
                                     <td>{{ $data['totalOpBalance'] }}</td>
-
                                 </tr>
                             @endforeach
                         @endif
